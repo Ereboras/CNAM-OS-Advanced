@@ -18,6 +18,11 @@
 #include <sys/types.h>
 #include <fcntl.h>
 
+// For exo 3
+#include<dirent.h>
+#include<pwd.h>
+#include<time.h>
+
 #define STDOUT 1
 #define STDERR 2
 
@@ -224,15 +229,18 @@ int main(int argc, char** argv)
   printf("\n");*/
 
   // Exo 3
+  struct stat objectStat;
   struct stat fileStat;
-  if(stat(bin_input_param, &fileStat) < 0) {
+  DIR *myDirectory;
+  struct dirent *files;
+  if(stat(bin_input_param, &objectStat) < 0) {
       printf("Error checking link: %s\n", strerror(errno));
   }
-  int isDir = S_ISDIR(fileStat.st_mode);
-  int isFile = S_ISREG(fileStat.st_mode);
-  int isSymLink = S_ISLNK(fileStat.st_mode);
+  int isDir = S_ISDIR(objectStat.st_mode);
+  int isFile = S_ISREG(objectStat.st_mode);
+  int isSymLink = S_ISLNK(objectStat.st_mode);
 
-  if(isDir > 0) {
+  if(isDir) {
       printf("This is a directory\n");
   } else if(isFile) {
       printf("This is a file\n");
@@ -244,6 +252,86 @@ int main(int argc, char** argv)
       printf("Invalid type of file as argument\n");
       return 0;
   }
+
+  if(isDir) {
+      if ((myDirectory = opendir(bin_input_param)) == NULL) {
+          printf("Error checking link: %s\n", strerror(errno));
+      }
+      struct passwd *fileUser;
+      struct group *fileGroup;
+      while((files = readdir(myDirectory)) != NULL) {
+
+          // Get file full path
+          char *myFilePath = (char *) malloc(1 + sizeof(bin_input_param) + sizeof(files->d_name));
+          strcpy(myFilePath, bin_input_param);
+          strcat(myFilePath, "/");
+          strcat(myFilePath, files->d_name);
+
+          if(stat(myFilePath, &fileStat) < 0) {
+              printf("Error checking link of directory files: %s\n", strerror(errno));
+          }
+
+          // Get type of file
+          int isFileDir = S_ISDIR(fileStat.st_mode);
+          int isFileFile = S_ISREG(fileStat.st_mode);
+          int isFileSymLink = S_ISLNK(fileStat.st_mode);
+
+          // Name of File
+          printf("%-10s ", files->d_name);
+
+          // Permissions of file
+          printf((fileStat.st_mode & S_IRUSR) ? "r" : "-");
+          printf((fileStat.st_mode & S_IWUSR) ? "w" : "-");
+          printf((fileStat.st_mode & S_IXUSR) ? "x" : "-");
+
+          printf((fileStat.st_mode & S_IRGRP) ? "r" : "-");
+          printf((fileStat.st_mode & S_IWGRP) ? "w" : "-");
+          printf((fileStat.st_mode & S_IXGRP) ? "x" : "-");
+
+          printf((fileStat.st_mode & S_IROTH) ? "r" : "-");
+          printf((fileStat.st_mode & S_IWOTH) ? "w" : "-");
+          printf((fileStat.st_mode & S_IXOTH) ? "x" : "-");
+
+          // User of file
+          if((fileUser = getpwuid(fileStat.st_uid)) == NULL) {
+              printf("Error trying to get user infos: %s\n", strerror(errno));
+          }
+
+          printf("  %10s", fileUser->pw_name);
+
+          // Group of file
+          if((fileGroup = getgrgid(fileStat.st_gid)) == NULL) {
+              printf("Error trying to get user infos: %s\n", strerror(errno));
+          }
+
+          printf(":%-10s ", fileUser->pw_name);
+
+          // Size of file
+          if(isFileFile || isFileSymLink) {
+              printf("%9d  ", fileStat.st_size);
+          } else {
+              printf("---------  ");
+          }
+
+          // Last modification time
+          char *dateFile;
+          const struct tm *dateStruct;
+          if((dateStruct = gmtime(&fileStat.st_mtime)) == NULL) {
+              printf("Error trying to get time form file: %s\n", strerror(errno));
+          }
+          if(strftime(dateFile, 36, "%d%m%y @ %Hh%M", dateStruct) == 0) {
+              printf("Error trying to convert time: %s\n", strerror(errno));
+          }
+
+          printf("%s", dateFile);
+
+          printf("\n");
+          free_if_needed(myFilePath);
+      }
+  }
+
+  // Exo 4
+
 
   // Freeing allocated data
   free_if_needed(bin_input_param);

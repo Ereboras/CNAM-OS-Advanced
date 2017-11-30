@@ -13,7 +13,7 @@ int main(int argc, char** argv){
 
 	if(argc <= 1 )
     {
-        dprintf(STDERR, "Too few arguments. One minimum is required.\n");
+        dprintf(STDERR, "One argument is required.\n");
        	exit(EXIT_FAILURE);
     }
     else

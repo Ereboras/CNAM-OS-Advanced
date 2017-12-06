@@ -6,63 +6,71 @@
 #include <sys/time.h>
 
 #define SIZE (int) 1e8 // 100 000 000
+#define random_max (int) 1e9 // 1 000 000 000
 
-struct args_struct {
+typedef struct args_struct {
 	int start;
 	int end;
-};
+} args_struct;
 
-struct result_struct {
+typedef struct result_struct {
 	int min;
 	int max;
+	pthread_mutex_t mutex;
+	pthread_cond_t condition;
+} result_struct;
+
+static result_struct results = {
+	.mutex = PTHREAD_MUTEX_INITIALIZER
 };
 
-struct result_struct results;
-
 int myArray[SIZE];
-int random_max, max;
 struct timeval begin, end;
 
 // Search the minimum value of the array myArray
 void * search_min(void* args) {
-	struct args_struct *arguments = (struct args_struct *) args;
-
+	args_struct *arguments = (struct args_struct *) args;
+	pthread_mutex_lock(&results.mutex);
 	for(int i=arguments->start;i<arguments->end;i++) {
 		if(results.min > myArray[i]) {
 			results.min = myArray[i];
 		}
 	}
-
+	pthread_mutex_unlock(&results.mutex);
 	return NULL;
 }
 
 // Search the maximum value of the array myArray
 void * search_max(void* args) {
-
-	for(int i=0;i<SIZE;i++) {
+	args_struct *arguments = (struct args_struct *) args;
+	pthread_mutex_lock(&results.mutex);
+	for(int i=arguments->start;i<arguments->end;i++) {
 		if(results.max < myArray[i]) {
 			results.max = myArray[i];
 		}
 	}
-
+	pthread_mutex_unlock(&results.mutex);
 	return NULL;
 }
 
 // Creates the threads & assign equals portion of array to each
 int createThreads(int nbThreads, void *(fct) (void *)) {
 	pthread_t threads[nbThreads];
+	args_struct args[nbThreads];
 	int sizeThread = SIZE / nbThreads;
 	int rest = SIZE % nbThreads;
-	struct args_struct args;
 
 	for(int i = 0; i < nbThreads; i++) {
-		args.start = sizeThread*i;
-		args.end = args.start + sizeThread;
+		args[i].start = sizeThread*i;
+		args[i].end = args[i].start + sizeThread;
 		if(i == nbThreads - 1 && rest > 0) {
-			args.end += 1;
+			args[i].end += 1;
 		}
+	}
 
-		if (pthread_create(&threads[i], NULL, search_min, (void *) &args)) {
+	gettimeofday (&begin, NULL);
+	for(int i = 0; i < nbThreads; i++) {
+		if (pthread_create(&threads[i], NULL, fct, (void *) &args[i])) {
 			return EXIT_FAILURE;
 		}
 	}
@@ -71,41 +79,37 @@ int createThreads(int nbThreads, void *(fct) (void *)) {
 			return EXIT_FAILURE;
 		}
 	}
+	gettimeofday (&end, NULL);
+	printf("search process time (%d threads): %fs\n", nbThreads, (end.tv_sec - begin.tv_sec) + ((end.tv_usec - begin.tv_usec)/1000000.0));
 	return 0;
 }
 
-void calculateProcess(int nbThreads, char *fctSearch) {
-	void *fct;
-	if(strcmp(fctSearch, "min") == 0) {
-		fct = search_min;
-	} else {
-		fct = search_max;
-	}
+void initThreads(int nbThreads, void *(fct) (void *)) {
+
+	results.min = random_max;
+	results.max = 0;
 
 	if(nbThreads > 0) {
-		gettimeofday (&begin, NULL);
 		createThreads(nbThreads, fct);
-		gettimeofday (&end, NULL);
 	} else {
 		// Search with 0 threads
-		struct args_struct args;
+		args_struct args;
 		args.start = 0;
 		args.end = SIZE;
 
 		gettimeofday (&begin, NULL);
 		search_min((void *) &args);
+		gettimeofday (&end, NULL);
+		printf("search process time (%d threads): %fs\n", nbThreads, (end.tv_sec - begin.tv_sec) + ((end.tv_usec - begin.tv_usec)/1000000.0));
+
+		gettimeofday (&begin, NULL);
 		search_max((void *) &args);
 		gettimeofday (&end, NULL);
+		printf("search process time (%d threads): %fs\n", nbThreads, (end.tv_sec - begin.tv_sec) + ((end.tv_usec - begin.tv_usec)/1000000.0));
 	}
-
-	printf("search process time of %s (%d threads): %fs\n",fctSearch, nbThreads, (end.tv_sec - begin.tv_sec) + ((end.tv_usec - begin.tv_usec)/1000000.0));
 }
 
 int main(){
-
-	random_max = 1e9; // 1 000 000 000
-	results.min = random_max;
-	results.max = 0;
 
 	// Array initialisation
 	srand(time(NULL));
@@ -114,17 +118,16 @@ int main(){
 	}
 
 	// Search with 2 / 4 / 8 threads
-	calculateProcess(0, "min");
-	calculateProcess(0, "max");
+	initThreads(0, NULL);
 	printf("--------------------\n");
-	calculateProcess(2, "min");
-	calculateProcess(2, "max");
+	initThreads(2, search_min);
+	initThreads(2, search_max);
 	printf("--------------------\n");
-	calculateProcess(4, "min");
-	calculateProcess(4, "max");
+	initThreads(4, search_min);
+	initThreads(4, search_max);
 	printf("--------------------\n");
-	calculateProcess(8, "min");
-	calculateProcess(8, "max");
+	initThreads(8, search_min);
+	initThreads(8, search_max);
 
 	return EXIT_SUCCESS;
 }

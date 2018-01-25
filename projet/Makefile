@@ -6,7 +6,6 @@ HEADERS_DIR=./headers
 
 SRC=$(wildcard $(SRC_DIR)/*.c)
 OBJ=$(SRC:.c=.o)
-HEADERS=$(wildcard $(HEADERS_DIR)/*.h)
 
 EXEC=prog
 

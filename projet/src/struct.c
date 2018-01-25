@@ -1,14 +1,17 @@
 #include "../headers/struct.h"
+#include <stdlib.h>
+# include <stdio.h>
 
 void addNode(node **tree, unsigned int key)
 {
     node *tmpNode;
     node *tmpTree = *tree;
 
-    node *elem = malloc(sizeof(node));
+    node *elem = 0;
+    elem = malloc(sizeof(node));
     elem->key = key;
-    elem->left = NULL;
-    elem->right = NULL;
+    elem->left = 0;
+    elem->right = 0;
 
     if(tmpTree)
     do
@@ -49,5 +52,5 @@ void clearTree(node **tree)
     if(tmpTree->right) clearTree(&tmpTree->right);
 
     free(tmpTree);      
-    *tree = NULL;
+    *tree = 0;
 }

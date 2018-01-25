@@ -1,7 +1,4 @@
-#include <stdio.h>
-#include <stdlib.h>
-
-typedef struct Node {
+typedef struct node {
   unsigned int key;
   struct node *left;
   struct node *right;

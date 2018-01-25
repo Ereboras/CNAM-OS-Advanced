@@ -4,19 +4,30 @@
 #include<errno.h>
 #include "../headers/struct.h"
 
-void manageOperators() {
+void interactiveMode() {
+    printf("Enter a command: ");
 
 }
 
-void arrayIterate(int sizeCommand, char* commands[]) {
-    for(int i = 1; i < sizeCommand; i++) {
-        if(commands[i] == "&&" || commands[i] == "||") {
-            manageOperators(commands, i);
-        }
+void checkString(char* commands[]) {
+
+}
+
+void checkMode(int sizeCommand, char* commands[]) {
+    printf("|%s|\n", commands[1]);
+    if(sizeCommand == 1) {
+        printf("Activate interactive mode\n");
+        interactiveMode();
+    } else if(strcmp(commands[1], "-c") == 0) {
+        printf("Executing command\n");
+        checkString(commands);
+    } else {
+        printf("Bad argument error");
     }
 }
 
 int main(int argc, char** argv){
-    arrayIterate(argc, argv);
+    
+    checkMode(argc, argv);
     printf("\n");
 }

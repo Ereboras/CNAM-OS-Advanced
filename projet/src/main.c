@@ -4,9 +4,32 @@
 #include<errno.h>
 #include "../headers/struct.h"
 
-void interactiveMode() {
-    printf("Enter a command: ");
+char *inputString(FILE* fp, size_t size){
+//The size is extended by the input with the value of the provisional
+    char *str;
+    int ch;
+    size_t len = 0;
+    str = realloc(NULL, sizeof(char)*size);//size is start size
+    if(!str)return str;
+    while(EOF!=(ch=fgetc(fp)) && ch != '\n'){
+        str[len++]=ch;
+        if(len==size){
+            str = realloc(str, sizeof(char)*(size+=16));
+            if(!str)return str;
+        }
+    }
+    str[len++]='\0';
 
+    return realloc(str, sizeof(char)*len);
+}
+
+void interactiveMode() {
+    char *command;
+    printf("Enter a command: \n");
+    while(strcmp(command, "exit") != 0) {
+        printf(">");
+        command = inputString(stdin, 10);
+    }
 }
 
 void checkString(char* commands[]) {
@@ -14,7 +37,6 @@ void checkString(char* commands[]) {
 }
 
 void checkMode(int sizeCommand, char* commands[]) {
-    printf("|%s|\n", commands[1]);
     if(sizeCommand == 1) {
         printf("Activate interactive mode\n");
         interactiveMode();

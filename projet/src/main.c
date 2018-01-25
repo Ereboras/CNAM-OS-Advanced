@@ -2,10 +2,17 @@
 #include<stdlib.h>
 #include<string.h>
 #include<errno.h>
+#include "../headers/struct.h"
 
-int arrayIterate(int sizeCommand, char* commands[]) {
+void manageOperators() {
+
+}
+
+void arrayIterate(int sizeCommand, char* commands[]) {
     for(int i = 1; i < sizeCommand; i++) {
-        printf("%s ", commands[i]);
+        if(commands[i] == "&&" || commands[i] == "||") {
+            manageOperators(commands, i);
+        }
     }
 }
 

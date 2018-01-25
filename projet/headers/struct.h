@@ -1,12 +1,11 @@
 #include <stdio.h>
 #include <stdlib.h>
-#include <stdbool.h>
 
 typedef struct Node {
   unsigned int key;
   struct node *left;
   struct node *right;
-} Node;
+} node;
 
 /* @function : addNode
  * @description: Permet d'ajouter un noeud dans l'arbre

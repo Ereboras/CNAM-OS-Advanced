@@ -1,12 +1,4 @@
-#include <stdio.h>
-#include <stdlib.h>
-#include <stdbool.h>
-
-typedef struct Node {
-  unsigned int key;
-  struct node *left;
-  struct node *right;
-} Node;
+#include "../headers/struct.h"
 
 void addNode(node **tree, unsigned int key)
 {

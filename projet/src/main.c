@@ -24,6 +24,17 @@ char *inputString(FILE* fp, size_t size){
     return realloc(str, sizeof(char)*len);
 }
 
+void logAction(char* action) {
+    FILE *fp = fopen("bin/log", "a");
+    if(fp) {
+        fprintf(fp, action);
+        fprintf(fp, "\n");
+        fclose(fp);
+    } else {
+        printf("Error while logging command: %s", strerror(errno));
+    }
+}
+
 char* currentPosition(char* cwd, int size) {
     if(getcwd(cwd, size) != 0) {
         return cwd;
@@ -43,6 +54,7 @@ void checkString(char *command) {
     token = strtok(command, " ");
     while(token != NULL) {
         printf("%s|", token);
+        logAction(token);
         token = strtok(NULL, " ");
     }
 }

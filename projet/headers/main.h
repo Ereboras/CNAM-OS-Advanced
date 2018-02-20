@@ -40,4 +40,4 @@ void checkMode(int sizeCommand, char* commands[]);
  * @param : char* commands[]
  * @return : nothing
 */
-void logAction(char* command[]);
+void logAction(char* command);

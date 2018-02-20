@@ -2,6 +2,7 @@
 #include<stdlib.h>
 #include<string.h>
 #include<errno.h>
+#include <unistd.h>
 #include "../headers/struct.h"
 
 char *inputString(FILE* fp, size_t size){
@@ -23,17 +24,36 @@ char *inputString(FILE* fp, size_t size){
     return realloc(str, sizeof(char)*len);
 }
 
-void interactiveMode() {
-    char *command;
-    printf("Enter a command: \n");
-    while(strcmp(command, "exit") != 0) {
-        printf(">");
-        command = inputString(stdin, 10);
+char* currentPosition(char* cwd, int size) {
+    if(getcwd(cwd, size) != 0) {
+        return cwd;
+    } else {
+        printf("Error while retrieving cwd: %s", strerror(errno));
+        return "Unknown";
     }
 }
 
-void checkString(char* commands[]) {
+void checkString(char *command) {
+    printf("command: %s", command);
+}
 
+void interactiveMode() {
+    char *command;
+    char path[8192];
+    
+    printf("Enter a command: \n");
+    while(strcmp(command, "exit") != 0) {
+        currentPosition(path, 8192);
+        printf("\n%s > ", path);
+        command = inputString(stdin, 10);
+        checkString(command);
+    }
+
+    if(strcmp(command, "exit") == 0) {
+        exit(0);
+    } else {
+        exit(42);
+    }
 }
 
 void checkMode(int sizeCommand, char* commands[]) {

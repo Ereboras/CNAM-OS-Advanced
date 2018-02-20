@@ -18,6 +18,6 @@ clean:
 	rm -rf $(SRC_DIR)/*.o
 
 mrproper: clean
-	rm -rf $(BIN_DIR)/$(EXEC)
+	rm -rf $(BIN_DIR)/*
 
 .PHONY: clean

@@ -1,3 +1,8 @@
+#ifndef FILE_MAIN_HEADER
+#define FILE_MAIN_HEADER
+
+#include "../headers/typedef.h"
+
 /* @function : inputString
  * @description: Get user input and realloc if the command is too long
  * @param : FILE* fp
@@ -10,16 +15,16 @@ char* inputString(FILE* fp, size_t size);
  * @description: Get current position in tree files
  * @param : char* path
  * @param : int size
- * @return : nothing
+ * @return : char*
 */
 char* currentPosition(char* path, int size);
 
-/* @function : checkString
+/* @function : buildTree
  * @description: Parse string & set it in tree mode
  * @param : char* commands
  * @return : nothing
 */
-void checkString(char* commands);
+void buildTree(char* commands);
 
 /* @function : interactiveMode
  * @description: Loop for interactive mode
@@ -37,7 +42,9 @@ void checkMode(int sizeCommand, char* commands[]);
 
 /* @function : logAction
  * @description: Log action made by user in a log file
- * @param : char* commands[]
+ * @param : char* commands
  * @return : nothing
 */
 void logAction(char* command);
+
+#endif

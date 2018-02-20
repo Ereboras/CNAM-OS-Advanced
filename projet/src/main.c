@@ -2,8 +2,9 @@
 #include<stdlib.h>
 #include<string.h>
 #include<errno.h>
-#include <unistd.h>
-#include "../headers/struct.h"
+#include<unistd.h>
+#include "../headers/main.h"
+#include "../headers/tree.h"
 
 char *inputString(FILE* fp, size_t size){
 //The size is extended by the input with the value of the provisional
@@ -48,10 +49,12 @@ void changeDir(char *path) {
     chdir(path);
 }
 
-void checkString(char *command) {
+void buildTree(char *command) {
+    char *token;
+    node *root;
     
-    char* token;
     token = strtok(command, " ");
+    //root = createRoot(token);
     while(token != NULL) {
         printf("%s|", token);
         logAction(token);
@@ -68,7 +71,7 @@ void interactiveMode() {
         currentPosition(path, 8192);
         printf("\n%s > ", path);
         command = inputString(stdin, 10);
-        checkString(command);
+        buildTree(command);
     }
 
     if(strcmp(command, "exit") == 0) {
@@ -84,14 +87,13 @@ void checkMode(int sizeCommand, char *commands[]) {
         interactiveMode();
     } else if(strcmp(commands[1], "-c") == 0) {
         printf("Executing command\n");
-        checkString(commands[2]);
+        buildTree(commands[2]);
     } else {
         printf("Bad argument error");
     }
 }
 
 int main(int argc, char** argv){
-    
     checkMode(argc, argv);
     printf("\n");
 }

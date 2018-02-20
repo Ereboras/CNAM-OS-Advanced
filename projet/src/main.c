@@ -33,8 +33,18 @@ char* currentPosition(char* cwd, int size) {
     }
 }
 
+void changeDir(char *path) {
+    chdir(path);
+}
+
 void checkString(char *command) {
-    printf("command: %s", command);
+    
+    char* token;
+    token = strtok(command, " ");
+    while(token != NULL) {
+        printf("%s|", token);
+        token = strtok(NULL, " ");
+    }
 }
 
 void interactiveMode() {
@@ -56,13 +66,13 @@ void interactiveMode() {
     }
 }
 
-void checkMode(int sizeCommand, char* commands[]) {
+void checkMode(int sizeCommand, char *commands[]) {
     if(sizeCommand == 1) {
         printf("Activate interactive mode\n");
         interactiveMode();
     } else if(strcmp(commands[1], "-c") == 0) {
         printf("Executing command\n");
-        checkString(commands);
+        checkString(commands[2]);
     } else {
         printf("Bad argument error");
     }

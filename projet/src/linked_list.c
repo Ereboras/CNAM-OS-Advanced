@@ -13,3 +13,10 @@ node* createEmptyNode() {
     root->command = "";
     return root;
 }
+
+node* createNodeAndLinkNext(node* root, char* cmd) {
+    node *temp = createNode(cmd);
+    root->next = temp;
+    temp->previous = root;
+    return temp;
+}

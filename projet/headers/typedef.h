@@ -7,8 +7,8 @@ typedef struct node {
     char *command;
     bool success;
     char *response;
-    struct node *left;
-    struct node *right;
+    struct node *previous;
+    struct node *next;
 } node;
 
 #endif

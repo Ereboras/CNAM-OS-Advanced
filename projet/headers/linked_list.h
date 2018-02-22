@@ -8,7 +8,7 @@
  * @param : char* command
   * @return : node*
 */
-node* createRoot(char* command);
+node* createNode(char* cmd);
 
 /* @function : addRightChild
  * @description: Add child to the right side

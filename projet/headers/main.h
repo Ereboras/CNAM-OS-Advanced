@@ -11,6 +11,20 @@
 */
 char* inputString(FILE* fp, size_t size);
 
+/* @function : isOperator
+ * @description: Check if string is a linux operator
+ * @param : char* operator
+ * @return : bool
+*/
+bool isOperator(char* operator);
+
+/* @function : logAction
+ * @description: Log action made by user in a log file
+ * @param : char* commands
+ * @return : nothing
+*/
+void logAction(char* command);
+
 /* @function : currentPosition
  * @description: Get current position in tree files
  * @param : char* path
@@ -19,12 +33,26 @@ char* inputString(FILE* fp, size_t size);
 */
 char* currentPosition(char* path, int size);
 
+/* @function : changeDir
+ * @description: CChange the current directory
+ * @param : char *path
+ * @return : nothing
+*/
+void changeDir(char *path);
+
+/* @function : displayChain
+ * @description: Display the chained list
+ * @param : node* root
+ * @return : nothing
+*/
+void displayChain(node* root);
+
 /* @function : buildTree
  * @description: Parse string & set it in tree mode
  * @param : char* commands
  * @return : nothing
 */
-void buildTree(char* commands);
+void buildChain(char* commands);
 
 /* @function : interactiveMode
  * @description: Loop for interactive mode
@@ -39,12 +67,5 @@ void interactiveMode();
  * @return : nothing
 */
 void checkMode(int sizeCommand, char* commands[]);
-
-/* @function : logAction
- * @description: Log action made by user in a log file
- * @param : char* commands
- * @return : nothing
-*/
-void logAction(char* command);
 
 #endif

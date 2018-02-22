@@ -4,7 +4,7 @@
 #include<errno.h>
 #include<unistd.h>
 #include "../headers/main.h"
-#include "../headers/tree.h"
+#include "../headers/linked_list.h"
 
 char *inputString(FILE* fp, size_t size){
 //The size is extended by the input with the value of the provisional
@@ -23,6 +23,14 @@ char *inputString(FILE* fp, size_t size){
     str[len++]='\0';
 
     return realloc(str, sizeof(char)*len);
+}
+
+bool isOperator(char* operator) {
+    if ((strcmp(operator, ";") == 0) || (strcmp(operator, "|") == 0)) {
+        return true;
+    } else {
+        return false;
+    }
 }
 
 void logAction(char* action) {
@@ -49,17 +57,45 @@ void changeDir(char *path) {
     chdir(path);
 }
 
-void buildTree(char *command) {
+void displayChain(node* root) {
+    printf("%s", root->command);
+    if(root->next != 0) {
+        printf("has left");
+        displayChain(root->next);
+    }
+}
+
+void buildChain(char *command) {
     char *token;
     node *root;
+    node *current;
     
     token = strtok(command, " ");
-    //root = createRoot(token);
+    root = createNode(token);
+    current = root;
+    token = strtok(NULL, " ");
+
     while(token != NULL) {
-        printf("%s|", token);
+        if (isOperator(token) == true) {
+            node *temp = createNode(token);
+            current->next = temp;
+            temp->previous = current;
+            current = temp;
+        } else {
+            if(isOperator(current->command) == false) {
+                strcpy(current->command, token);
+            } else {
+                node *temp = createNode(token);
+                current->next = temp;
+                temp->previous = current;
+                current = temp;
+            }
+        }
         logAction(token);
         token = strtok(NULL, " ");
     }
+
+    displayChain(root);
 }
 
 void interactiveMode() {
@@ -71,7 +107,7 @@ void interactiveMode() {
         currentPosition(path, 8192);
         printf("\n%s > ", path);
         command = inputString(stdin, 10);
-        buildTree(command);
+        buildChain(command);
     }
 
     if(strcmp(command, "exit") == 0) {
@@ -87,7 +123,7 @@ void checkMode(int sizeCommand, char *commands[]) {
         interactiveMode();
     } else if(strcmp(commands[1], "-c") == 0) {
         printf("Executing command\n");
-        buildTree(commands[2]);
+        buildChain(commands[2]);
     } else {
         printf("Bad argument error");
     }

@@ -1,3 +1,7 @@
+/**
+ * \file main.c
+ * \author Emilie AM et Mohamed A
+ */
 #include<stdio.h>
 #include<stdlib.h>
 #include<string.h>

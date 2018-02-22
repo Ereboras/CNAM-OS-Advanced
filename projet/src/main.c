@@ -141,20 +141,23 @@ void createProcessAndExecuteCmd(node* element) {
     } else if(pid == 0) {
         printf("Execute command %s\n", element->command);
 
-        close(link[1]);
-        dup2 (link[0], STDOUT_FILENO);
+        close(link[0]);
+        dup2 (link[1], 0);
 
         executeCmd(element);
-        
+        close(link[1]);
         exit(0);
     } else {
         int wait_id = -1;
-
-        close(link[0]);
-
-        
+        close(link[1]);
+        dup2(link[0], 1);
         wait(&wait_id);
         printf("parent\n");
+
+        char readbuffer[100];
+        read(link[0], readbuffer, sizeof(readbuffer));
+        printf("Received string: %s", readbuffer);
+        close(link[0]);
     }
 }
 

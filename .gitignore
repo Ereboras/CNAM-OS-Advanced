@@ -53,3 +53,5 @@ dkms.conf
 
 #Personal files
 projet/bin/*
+projet/doc/html
+projet/doc/latex

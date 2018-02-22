@@ -1,3 +1,4 @@
+<<<<<<< Updated upstream
 /**
  * \file main.c
  * \author Emilie AM et Mohamed A
@@ -7,6 +8,13 @@
 #include<string.h>
 #include<errno.h>
 #include<unistd.h>
+=======
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <errno.h>
+#include <unistd.h>
+>>>>>>> Stashed changes
 #include "../headers/main.h"
 #include "../headers/linked_list.h"
 
@@ -30,7 +38,26 @@ char *inputString(FILE* fp, size_t size){
 }
 
 bool isOperator(char* operator) {
-    if ((strcmp(operator, ";") == 0) || (strcmp(operator, "|") == 0)) {
+    if ((strcmp(operator, ";") == 0) || 
+        (strcmp(operator, "|") == 0) || 
+        (strcmp(operator, "&") == 0) || 
+        (strcmp(operator, "&&") == 0) || 
+        (strcmp(operator, "||") == 0) || 
+        (strcmp(operator, "<") == 0) || 
+        (strcmp(operator, ">") == 0) || 
+        (strcmp(operator, "<<") == 0) || 
+        (strcmp(operator, ">>") == 0)) {
+        return true;
+    } else {
+        return false;
+    }
+}
+
+bool isBuiltInCommand(char* cmd) {
+    if ((strcmp(cmd, "cd") == 0) ||
+        (strcmp(cmd, "pwd") == 0) ||
+        (strcmp(cmd, "exit") == 0) ||
+        (strcmp(cmd, "echo") == 0)) {
         return true;
     } else {
         return false;
@@ -61,6 +88,37 @@ void changeDir(char *path) {
     chdir(path);
 }
 
+bool createProcessAndExecuteCmd(node* element) {
+    pid_t pid = fork();
+
+    if(pid == -1) {
+        printf("Error when creating child process: %s", strerror(errno));
+        return false;
+    } else if(pid == 0) {
+        printf("Execute command %s", element->command);
+        exit(0);
+    } else {
+        printf("Currently in parent process");
+        wait(pid);
+    }
+}
+
+bool executeCommands(node* root) {
+    node* currentNode = root;
+
+    while(currentNode->next != 0) {
+        printf("Check cmd: %s\n", currentNode->command);
+
+        if(strcmp(currentNode->command, "&&") == 0) {
+            if(currentNode->previous->response == 0) {
+                createProcessAndExecuteCmd(currentNode->previous);
+            }
+        }
+        
+        currentNode = currentNode->next;
+    }
+}
+
 void displayChain(node* root) {
     printf("%s", root->command);
     if(root->next != 0) {
@@ -85,14 +143,18 @@ void buildChain(char *command) {
             if(isOperator(current->command) == true) {
                 current = createNodeAndLinkNext(current, token);
             } else {
-                strcpy(current->command, token);
+                char *concat = malloc(strlen(current->command) + strlen(token) + 1);
+                strcpy(concat, current->command);
+                strcat(concat, " ");
+                strcat(concat, token);
+                current->command = concat;
             }
         }
         logAction(token);
         token = strtok(NULL, " ");
     }
 
-    displayChain(root);
+    executeCommands(root);
 }
 
 void interactiveMode() {

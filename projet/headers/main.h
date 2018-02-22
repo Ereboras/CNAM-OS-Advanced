@@ -34,11 +34,18 @@ void logAction(char* command);
 char* currentPosition(char* path, int size);
 
 /* @function : changeDir
- * @description: CChange the current directory
+ * @description: Change the current directory
  * @param : char *path
  * @return : nothing
 */
 void changeDir(char *path);
+
+/* @function : executeCommands
+ * @description: Launch execution of commands
+ * @param : node* root
+ * @return : bool
+*/
+bool executeCommands(node* root);
 
 /* @function : displayChain
  * @description: Display the chained list

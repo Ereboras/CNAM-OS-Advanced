@@ -85,7 +85,11 @@ bool changeDir(char *path) {
 }
 
 void executeCmd(node* element) {
-    char* cmd = strtok(element->command, " ");
+
+    char* program = malloc(sizeof(element->command));
+    strcpy(program, element->command);
+    char* cmd = strtok(program, " ");
+
     if(strcmp(cmd, "cd") == 0) {
         char* path = strtok(NULL, " ");
         element->success = changeDir(path);
@@ -94,14 +98,31 @@ void executeCmd(node* element) {
         element->success = currentPosition(path, 8192);
         printf("%s\n", path);
     } else if(strcmp(cmd, "exit") == 0) {
+        element->success = true;
         exit(0);
     } else if(strcmp(cmd, "echo") == 0) {
         printf("%s\n", element->command);
+        element->success = true;
     } else {
-        if(system(element->command) != 0) {
+        char *args[10];
+        int i = 0;
+        cmd = strtok(NULL, " ");
+        while(cmd != NULL) {
+            args[i] = cmd;
+            cmd = strtok(NULL, " ");
+            i++;
+        }
+        int y = 0;
+        printf("command: %s\n", program);
+        while(args[y] != NULL) {
+            printf("args[%d]: %s\n", y, args[y]);
+            y++;
+        }
+        if(execvp(cmd, args) == -1) {
             printf("Fail executing command: %s", strerror(errno));
             element->success = false;
         } else {
+            printf("Success! \n");
             element->success = true;
         }
     }
@@ -109,16 +130,29 @@ void executeCmd(node* element) {
 
 void createProcessAndExecuteCmd(node* element) {
     pid_t pid = fork();
+    int link[2];
+
+    if(pipe(link) == -1) {
+        printf("Error when creating pipe : %s", strerror(errno));
+    }
 
     if(pid == -1) {
         printf("Error when creating child process: %s", strerror(errno));
     } else if(pid == 0) {
         printf("Execute command %s\n", element->command);
+
+        close(link[1]);
+        dup2 (link[0], STDOUT_FILENO);
+
         executeCmd(element);
         
         exit(0);
     } else {
         int wait_id = -1;
+
+        close(link[0]);
+
+        
         wait(&wait_id);
         printf("parent\n");
     }

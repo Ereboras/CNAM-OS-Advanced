@@ -4,26 +4,24 @@
 #include "../headers/typedef.h"
 
 /* @function : createRoot
- * @description: Permet d'ajouter un noeud dans l'arbre
- * @param : char* command
-  * @return : node*
+ * @description: Create a node with command
+ * @param : char* cmd
+ * @return : node*
 */
 node* createNode(char* cmd);
 
-/* @function : addRightChild
- * @description: Add child to the right side
- * @param : node *root
- * @param : node *child
- * @return : nothing
+/* @function : createEmptyNode
+ * @description: Create new empty nodes
+ * @return : node*
 */
-void addRightChild(node *root, node *child);
+node* createEmptyNode();
 
-/* @function : addLeftChild
- * @description: Add child to the left side
+/* @function : createNodeAndLinkNext
+ * @description: Create node and link root with the new
  * @param : node *root
- * @param : node *child
- * @return : nothing
+ * @param : node *cmd
+ * @return : node*
 */
-void addLeftChild(node *root, node *child);
+node* createNodeAndLinkNext(node* root, char* cmd);
 
 #endif

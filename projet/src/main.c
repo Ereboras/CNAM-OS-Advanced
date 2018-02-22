@@ -60,7 +60,6 @@ void changeDir(char *path) {
 void displayChain(node* root) {
     printf("%s", root->command);
     if(root->next != 0) {
-        printf("has left");
         displayChain(root->next);
     }
 }
@@ -77,18 +76,12 @@ void buildChain(char *command) {
 
     while(token != NULL) {
         if (isOperator(token) == true) {
-            node *temp = createNode(token);
-            current->next = temp;
-            temp->previous = current;
-            current = temp;
+            current = createNodeAndLinkNext(current, token);
         } else {
-            if(isOperator(current->command) == false) {
-                strcpy(current->command, token);
+            if(isOperator(current->command) == true) {
+                current = createNodeAndLinkNext(current, token);
             } else {
-                node *temp = createNode(token);
-                current->next = temp;
-                temp->previous = current;
-                current = temp;
+                strcpy(current->command, token);
             }
         }
         logAction(token);

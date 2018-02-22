@@ -1,0 +1,15 @@
+.TH "LE BEAU SHELL" "Manuel du shell"
+.SH NOM
+SHELL - Permet de lancer un shell codé en c
+.SH DESCRIPTION
+Cette page de manuel documente le shell codé par Mohamed Azzouz et Emilie Abdoul Malik.
+Créé dans le cadre du cours "Système d'exploitation avancé".
+.SH OPTIONS
+.TP
+\-c
+Quand l'option -c est utilisé, la commande est executée puis le shell se ferme.
+.TP
+\-h, \-\-help
+afficher un message d'aide et quitter.
+.SH AUTEUR
+Mohamed Azzouz et Emilie Abdoul Malik

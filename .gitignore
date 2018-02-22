@@ -52,6 +52,6 @@ Mkfile.old
 dkms.conf
 
 #Personal files
-projet/bin/*
+projet/bin/prog
 projet/doc/html
 projet/doc/latex

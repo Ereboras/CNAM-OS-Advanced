@@ -1,4 +1,3 @@
-<<<<<<< Updated upstream
 /**
  * \file main.c
  * \author Emilie AM et Mohamed A
@@ -8,13 +7,7 @@
 #include<string.h>
 #include<errno.h>
 #include<unistd.h>
-=======
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <errno.h>
-#include <unistd.h>
->>>>>>> Stashed changes
+#include <sys/wait.h>
 #include "../headers/main.h"
 #include "../headers/linked_list.h"
 
@@ -75,39 +68,66 @@ void logAction(char* action) {
     }
 }
 
-char* currentPosition(char* cwd, int size) {
-    if(getcwd(cwd, size) != 0) {
-        return cwd;
-    } else {
+bool currentPosition(char* cwd, int size) {
+    if(getcwd(cwd, size) == 0)  {
         printf("Error while retrieving cwd: %s", strerror(errno));
-        return "Unknown";
+        return false;
+    }
+    return true;
+}
+
+bool changeDir(char *path) {
+    if(chdir(path) != 0) {
+        printf("Error while changing cwd: %s", strerror(errno));
+        return false;
+    }
+    return true;
+}
+
+void executeCmd(node* element) {
+    char* cmd = strtok(element->command, " ");
+    if(strcmp(cmd, "cd") == 0) {
+        char* path = strtok(NULL, " ");
+        element->success = changeDir(path);
+    } else if(strcmp(cmd, "pwd") == 0) {
+        char path[8192];
+        element->success = currentPosition(path, 8192);
+        printf("%s\n", path);
+    } else if(strcmp(cmd, "exit") == 0) {
+        exit(0);
+    } else if(strcmp(cmd, "echo") == 0) {
+        printf("%s\n", element->command);
+    } else {
+        if(system(element->command) != 0) {
+            printf("Fail executing command: %s", strerror(errno));
+            element->success = false;
+        } else {
+            element->success = true;
+        }
     }
 }
 
-void changeDir(char *path) {
-    chdir(path);
-}
-
-bool createProcessAndExecuteCmd(node* element) {
+void createProcessAndExecuteCmd(node* element) {
     pid_t pid = fork();
 
     if(pid == -1) {
         printf("Error when creating child process: %s", strerror(errno));
-        return false;
     } else if(pid == 0) {
-        printf("Execute command %s", element->command);
+        printf("Execute command %s\n", element->command);
+        executeCmd(element);
+        
         exit(0);
     } else {
-        printf("Currently in parent process");
-        wait(pid);
+        int wait_id = -1;
+        wait(&wait_id);
+        printf("parent\n");
     }
 }
 
-bool executeCommands(node* root) {
+bool launchInOrder(node* root) {
     node* currentNode = root;
 
     while(currentNode->next != 0) {
-        printf("Check cmd: %s\n", currentNode->command);
 
         if(strcmp(currentNode->command, "&&") == 0) {
             if(currentNode->previous->response == 0) {
@@ -117,6 +137,8 @@ bool executeCommands(node* root) {
         
         currentNode = currentNode->next;
     }
+
+    return true;
 }
 
 void displayChain(node* root) {
@@ -154,7 +176,7 @@ void buildChain(char *command) {
         token = strtok(NULL, " ");
     }
 
-    executeCommands(root);
+    launchInOrder(root);
 }
 
 void interactiveMode() {

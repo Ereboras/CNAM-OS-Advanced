@@ -29,16 +29,16 @@ void logAction(char* command);
  * @description: Get current position in tree files
  * @param : char* path
  * @param : int size
- * @return : char*
+ * @return : bool
 */
-char* currentPosition(char* path, int size);
+bool currentPosition(char* path, int size);
 
 /* @function : changeDir
  * @description: Change the current directory
  * @param : char *path
- * @return : nothing
+ * @return : bool
 */
-void changeDir(char *path);
+bool changeDir(char *path);
 
 /* @function : executeCommands
  * @description: Launch execution of commands

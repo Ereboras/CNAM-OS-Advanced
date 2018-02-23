@@ -82,8 +82,8 @@ int changeDir(char *path) {
     return 0;
 }
 
-void executeCmd(node* element) {
-
+void executeCmd(node* element, char* input) {
+    
     char* program = malloc(sizeof(element->command));
     strcpy(program, element->command);
     char* cmd = strtok(program, " ");
@@ -104,12 +104,13 @@ void executeCmd(node* element) {
         element->success = 0;
     } else {
         char *args[10];
-        int i = 0;
-        while(cmd != NULL) {
+        int i;
+
+        for(i = 0; cmd != NULL; i++) {
             args[i] = cmd;
             cmd = strtok(NULL, " ");
-            i++;
         }
+        args[i] = NULL;
         element->success = 0;
         if(execvp(args[0], args) == -1) {
             exit(errno);
@@ -117,7 +118,7 @@ void executeCmd(node* element) {
     }
 }
 
-void createProcessAndExecuteCmd(node* element) {
+void createProcessAndExecuteCmd(node* element, char* input) {
     pid_t pid = fork();
     int link[2];
 
@@ -132,12 +133,14 @@ void createProcessAndExecuteCmd(node* element) {
     } else if(pid == 0) {
         printf("Execute command %s\n", element->command);
         
-        dup2(link[0], STDIN_FILENO);
-        close(link[0]);
+        close(link[0]); //close reading end in the child
+        dup2(link[1], 1); //send stdout to the pipe
+        dup2(link[1], 2); //send stderr to the pipe
+
         close(link[1]);
-        executeCmd(element);
+        executeCmd(element, input);
         
-        exit(0);
+        exit(errno);
     } else {
         int status_id = -1;
         wait(&status_id);
@@ -146,15 +149,25 @@ void createProcessAndExecuteCmd(node* element) {
             printf("Exit status was %d\n", WEXITSTATUS(status_id));
             element->success = status_id;
         }
-
-        close(link[0]);
-        dup2(link[0], STDIN_FILENO);
+        
+        close(link[1]); //close write end of the pipe in the parent
 
         char readbuffer[100];
-        read(link[0], readbuffer, sizeof(readbuffer));
+        read(link[0], readbuffer, strlen(readbuffer));
         element->response = readbuffer;
-
+        printf("AFFICHAGE DE RESPONSE:\n %s", readbuffer);
         close(link[0]);
+    }
+}
+
+void liberateThem(node* root) {
+    struct node* tmp;
+
+   while (root != NULL)
+    {
+       tmp = root;
+       root = root->next;
+       free(tmp);
     }
 }
 
@@ -162,34 +175,34 @@ bool launchInOrder(node* root) {
     node* currentNode = root;
 
     if(currentNode->next == NULL) {
-        createProcessAndExecuteCmd(currentNode);
+        createProcessAndExecuteCmd(currentNode, NULL);
     }
 
     while(currentNode->next != 0) {
 
         if(strcmp(currentNode->command, "&&") == 0) {
             if(currentNode->previous->response == 0) {
-                createProcessAndExecuteCmd(currentNode->previous);
+                createProcessAndExecuteCmd(currentNode->previous, NULL);
             }
             if(currentNode->previous->success == 0 && currentNode->next != NULL) {
-                createProcessAndExecuteCmd(currentNode->next);
+                createProcessAndExecuteCmd(currentNode->next, currentNode->previous->response);
             } else if (currentNode->previous->success  != 0){
-                printf("Error while executing [%s] : %s", currentNode->previous->command, strerror(currentNode->previous->success));
+                printf("Error while executing [%s] : code[%d] => %s", currentNode->previous->command, currentNode->previous->success, strerror(currentNode->previous->success));
                 exit(currentNode->previous->success);
             }
         } else if (strcmp(currentNode->command, "||") == 0) {
             if(currentNode->previous->response == 0) {
-                createProcessAndExecuteCmd(currentNode->previous);
+                createProcessAndExecuteCmd(currentNode->previous, NULL);
             }
             if(currentNode->previous->success != 0 && currentNode->next != NULL) {
-                createProcessAndExecuteCmd(currentNode->next);
+                createProcessAndExecuteCmd(currentNode->next, currentNode->previous->response);
             }
         } else if(strcmp(currentNode->command, "|") == 0) {
             if(currentNode->previous->response == 0) {
-                createProcessAndExecuteCmd(currentNode->previous);
-            } 
+                createProcessAndExecuteCmd(currentNode->previous, NULL);
+            }
             if(currentNode->previous->success == 0 && currentNode->next != NULL) {
-                createProcessAndExecuteCmd(currentNode->next);
+                createProcessAndExecuteCmd(currentNode->next, NULL);
             } else if(currentNode->previous->success != 0) {
                 printf("Error while executing [%s] : %s", currentNode->previous->command, strerror(currentNode->success));
                 exit(currentNode->previous->success);
@@ -213,6 +226,8 @@ int buildChain(char *command) {
     char *token;
     node *root;
     node *current;
+
+    logAction(command);
     
     token = strtok(command, " ");
     root = createNode(token);
@@ -233,7 +248,7 @@ int buildChain(char *command) {
                 current->command = concat;
             }
         }
-        logAction(token);
+        
         token = strtok(NULL, " ");
     }
 

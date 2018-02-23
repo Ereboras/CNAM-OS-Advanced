@@ -59,7 +59,7 @@ void displayChain(node* root);
  * @param : char* commands
  * @return : nothing
 */
-void buildChain(char* commands);
+int buildChain(char* commands);
 
 /* @function : interactiveMode
  * @description: Loop for interactive mode

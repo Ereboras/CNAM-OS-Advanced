@@ -60,7 +60,7 @@ bool isBuiltInCommand(char* cmd) {
 void logAction(char* action) {
     FILE *fp = fopen("bin/log", "a");
     if(fp) {
-        fprintf(fp, action);
+        fprintf(fp, "%s", action);
         fprintf(fp, "\n");
         fclose(fp);
     } else {
@@ -185,7 +185,7 @@ void displayChain(node* root) {
     }
 }
 
-void buildChain(char *command) {
+int buildChain(char *command) {
     char *token;
     node *root;
     node *current;
@@ -214,25 +214,23 @@ void buildChain(char *command) {
     }
 
     launchInOrder(root);
+    return 0;
 }
 
 void interactiveMode() {
     char *command;
     char path[8192];
+    int success = 0;
     
     printf("Enter a command: \n");
-    while(strcmp(command, "exit") != 0) {
+    while(success == 0) {
         currentPosition(path, 8192);
         printf("\n%s > ", path);
         command = inputString(stdin, 10);
-        buildChain(command);
+        success = buildChain(command);
     }
 
-    if(strcmp(command, "exit") == 0) {
-        exit(0);
-    } else {
-        exit(42);
-    }
+    exit(success);
 }
 
 void checkMode(int sizeCommand, char *commands[]) {

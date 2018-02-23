@@ -142,17 +142,17 @@ void createProcessAndExecuteCmd(node* element) {
         printf("Execute command %s\n", element->command);
 
         close(link[0]);
-        dup2 (link[1], 0);
-
-        executeCmd(element);
+        dup(link[1]);
         close(link[1]);
+        executeCmd(element);
+        
         exit(0);
     } else {
         int wait_id = -1;
         close(link[1]);
-        dup2(link[0], 1);
+        dup(link[0]);
+        
         wait(&wait_id);
-        printf("parent\n");
 
         char readbuffer[100];
         read(link[0], readbuffer, sizeof(readbuffer));

@@ -68,20 +68,20 @@ void logAction(char* action) {
     }
 }
 
-bool currentPosition(char* cwd, int size) {
+int currentPosition(char* cwd, int size) {
     if(getcwd(cwd, size) == 0)  {
         printf("Error while retrieving cwd: %s", strerror(errno));
-        return false;
+        return errno;
     }
-    return true;
+    return 0;
 }
 
-bool changeDir(char *path) {
+int changeDir(char *path) {
     if(chdir(path) != 0) {
         printf("Error while changing cwd: %s", strerror(errno));
-        return false;
+        return errno;
     }
-    return true;
+    return 0;
 }
 
 void executeCmd(node* element) {
@@ -96,34 +96,28 @@ void executeCmd(node* element) {
     } else if(strcmp(cmd, "pwd") == 0) {
         char path[8192];
         element->success = currentPosition(path, 8192);
-        printf("%s\n", path);
+        element->response = malloc(sizeof(path));
+        element->response = path;
     } else if(strcmp(cmd, "exit") == 0) {
-        element->success = true;
+        element->success = 0;
         exit(0);
     } else if(strcmp(cmd, "echo") == 0) {
-        printf("%s\n", element->command);
-        element->success = true;
+        element->response = element->command;
+        element->success = 0;
     } else {
         char *args[10];
         int i = 0;
-        cmd = strtok(NULL, " ");
         while(cmd != NULL) {
             args[i] = cmd;
             cmd = strtok(NULL, " ");
             i++;
         }
-        int y = 0;
-        printf("command: %s\n", program);
-        while(args[y] != NULL) {
-            printf("args[%d]: %s\n", y, args[y]);
-            y++;
-        }
-        if(execvp(cmd, args) == -1) {
+        if(execvp(args[0], args) == -1) {
             printf("Fail executing command: %s", strerror(errno));
-            element->success = false;
+            element->success = errno;
         } else {
             printf("Success! \n");
-            element->success = true;
+            element->success = 0;
         }
     }
 }
@@ -141,22 +135,24 @@ void createProcessAndExecuteCmd(node* element) {
     } else if(pid == 0) {
         printf("Execute command %s\n", element->command);
 
+        
+        dup2(link[0], STDIN_FILENO);
         close(link[0]);
-        dup(link[1]);
         close(link[1]);
         executeCmd(element);
         
         exit(0);
     } else {
         int wait_id = -1;
-        close(link[1]);
-        dup(link[0]);
-        
         wait(&wait_id);
+
+        close(link[0]);
+        dup2(link[0], STDIN_FILENO);
 
         char readbuffer[100];
         read(link[0], readbuffer, sizeof(readbuffer));
-        printf("Received string: %s", readbuffer);
+        element->response = readbuffer;
+
         close(link[0]);
     }
 }
@@ -169,6 +165,29 @@ bool launchInOrder(node* root) {
         if(strcmp(currentNode->command, "&&") == 0) {
             if(currentNode->previous->response == 0) {
                 createProcessAndExecuteCmd(currentNode->previous);
+            }
+            if(currentNode->previous->success == 0 && currentNode->next != NULL) {
+                createProcessAndExecuteCmd(currentNode->next);
+            } else if (currentNode->previous->success  != 0){
+                printf("Error while executing [%s] : %s", currentNode->previous->command, strerror(currentNode->success));
+                exit(currentNode->previous->success);
+            }
+        } else if (strcmp(currentNode->command, "||") == 0) {
+            if(currentNode->previous->response == 0) {
+                createProcessAndExecuteCmd(currentNode->previous);
+            }
+            if(currentNode->previous->success != 0 && currentNode->next != NULL) {
+                createProcessAndExecuteCmd(currentNode->next);
+            }
+        } else if(strcmp(currentNode->command, "|") == 0) {
+            if(currentNode->previous->response == 0) {
+                createProcessAndExecuteCmd(currentNode->previous);
+            } 
+            if(currentNode->previous->success == 0 && currentNode->next != NULL) {
+                createProcessAndExecuteCmd(currentNode->next);
+            } else if(currentNode->previous->success != 0) {
+                printf("Error while executing [%s] : %s", currentNode->previous->command, strerror(currentNode->success));
+                exit(currentNode->previous->success);
             }
         }
         

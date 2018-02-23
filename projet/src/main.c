@@ -70,7 +70,6 @@ void logAction(char* action) {
 
 int currentPosition(char* cwd, int size) {
     if(getcwd(cwd, size) == 0)  {
-        printf("Error while retrieving cwd: %s", strerror(errno));
         return errno;
     }
     return 0;
@@ -78,7 +77,6 @@ int currentPosition(char* cwd, int size) {
 
 int changeDir(char *path) {
     if(chdir(path) != 0) {
-        printf("Error while changing cwd: %s", strerror(errno));
         return errno;
     }
     return 0;
@@ -112,12 +110,9 @@ void executeCmd(node* element) {
             cmd = strtok(NULL, " ");
             i++;
         }
+        element->success = 0;
         if(execvp(args[0], args) == -1) {
-            printf("Fail executing command: %s", strerror(errno));
-            element->success = errno;
-        } else {
-            printf("Success! \n");
-            element->success = 0;
+            exit(errno);
         }
     }
 }
@@ -128,13 +123,14 @@ void createProcessAndExecuteCmd(node* element) {
 
     if(pipe(link) == -1) {
         printf("Error when creating pipe : %s", strerror(errno));
+        exit(errno);
     }
 
     if(pid == -1) {
         printf("Error when creating child process: %s", strerror(errno));
+        exit(errno);
     } else if(pid == 0) {
         printf("Execute command %s\n", element->command);
-
         
         dup2(link[0], STDIN_FILENO);
         close(link[0]);
@@ -143,8 +139,13 @@ void createProcessAndExecuteCmd(node* element) {
         
         exit(0);
     } else {
-        int wait_id = -1;
-        wait(&wait_id);
+        int status_id = -1;
+        wait(&status_id);
+
+        if ( WIFEXITED(status_id) ) {
+            printf("Exit status was %d\n", WEXITSTATUS(status_id));
+            element->success = status_id;
+        }
 
         close(link[0]);
         dup2(link[0], STDIN_FILENO);
@@ -160,6 +161,10 @@ void createProcessAndExecuteCmd(node* element) {
 bool launchInOrder(node* root) {
     node* currentNode = root;
 
+    if(currentNode->next == NULL) {
+        createProcessAndExecuteCmd(currentNode);
+    }
+
     while(currentNode->next != 0) {
 
         if(strcmp(currentNode->command, "&&") == 0) {
@@ -169,7 +174,7 @@ bool launchInOrder(node* root) {
             if(currentNode->previous->success == 0 && currentNode->next != NULL) {
                 createProcessAndExecuteCmd(currentNode->next);
             } else if (currentNode->previous->success  != 0){
-                printf("Error while executing [%s] : %s", currentNode->previous->command, strerror(currentNode->success));
+                printf("Error while executing [%s] : %s", currentNode->previous->command, strerror(currentNode->previous->success));
                 exit(currentNode->previous->success);
             }
         } else if (strcmp(currentNode->command, "||") == 0) {

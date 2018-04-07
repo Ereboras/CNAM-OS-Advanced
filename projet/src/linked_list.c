@@ -11,6 +11,7 @@
 node* createNode(char* cmd) {
     node *root = malloc(sizeof(node));
     root->command = cmd;
+    root->executed = false;
     return root;
 }
 
@@ -18,6 +19,7 @@ node* createNode(char* cmd) {
 node* createEmptyNode() {
     node *root = malloc(sizeof(node));
     root->command = "";
+    root->executed = false;
     return root;
 }
 

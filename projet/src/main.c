@@ -8,6 +8,7 @@
 #include<errno.h>
 #include<unistd.h>
 #include <sys/wait.h>
+#include <fcntl.h>
 #include "../headers/main.h"
 #include "../headers/linked_list.h"
 
@@ -82,25 +83,24 @@ int changeDir(char *path) {
     return 0;
 }
 
-void executeCmd(node* element, char* input) {
+void executeCmd(node* element) {
     
     char* program = malloc(sizeof(element->command));
     strcpy(program, element->command);
     char* cmd = strtok(program, " ");
-
+    
     if(strcmp(cmd, "cd") == 0) {
         char* path = strtok(NULL, " ");
         element->success = changeDir(path);
     } else if(strcmp(cmd, "pwd") == 0) {
         char path[8192];
         element->success = currentPosition(path, 8192);
-        element->response = malloc(sizeof(path));
-        element->response = path;
+        element->response = NULL;
     } else if(strcmp(cmd, "exit") == 0) {
         element->success = 0;
         exit(0);
     } else if(strcmp(cmd, "echo") == 0) {
-        element->response = element->command;
+        printf(element->command);
         element->success = 0;
     } else {
         char *args[10];
@@ -118,45 +118,58 @@ void executeCmd(node* element, char* input) {
     }
 }
 
-void createProcessAndExecuteCmd(node* element, char* input) {
-    pid_t pid = fork();
+void createProcessAndExecuteCmd(node* element, int input, bool lastCommand) {
+    
     int link[2];
+    element->executed = true;
 
     if(pipe(link) == -1) {
         printf("Error when creating pipe : %s", strerror(errno));
         exit(errno);
     }
 
+    pid_t pid = fork();
+
     if(pid == -1) {
         printf("Error when creating child process: %s", strerror(errno));
         exit(errno);
     } else if(pid == 0) {
-        printf("Execute command %s\n", element->command);
-        
-        close(link[0]); //close reading end in the child
-        dup2(link[1], 1); //send stdout to the pipe
-        dup2(link[1], 2); //send stderr to the pipe
+        // printf("Execute command %s\n", element->command);
 
+        if(input != 0) {
+            dup2(input, STDIN_FILENO);
+        }
+        
+        dup2(link[1], STDOUT_FILENO);
+        
+        close(link[0]);
         close(link[1]);
-        executeCmd(element, input);
+        
+        executeCmd(element);
         
         exit(errno);
     } else {
         int status_id = -1;
+        char readbuffer[4096];
+
         wait(&status_id);
 
         if ( WIFEXITED(status_id) ) {
-            printf("Exit status was %d\n", WEXITSTATUS(status_id));
+            // printf("Exit status was %d\n", WEXITSTATUS(status_id));
             element->success = status_id;
         }
-        
-        close(link[1]); //close write end of the pipe in the parent
 
-        char readbuffer[100];
-        read(link[0], readbuffer, strlen(readbuffer));
-        element->response = readbuffer;
-        printf("AFFICHAGE DE RESPONSE:\n %s", readbuffer);
-        close(link[0]);
+        close(link[1]);
+        read(link[0], readbuffer, sizeof(readbuffer));
+        if(!lastCommand) {
+            element->response = fopen("tmp_command", "w+");
+            fprintf(element->response, readbuffer);
+            fclose(element->response);
+            memset(readbuffer, 0, 4096);
+        } else {
+            read(link[0], readbuffer, sizeof(readbuffer));
+            printf("%s\n", readbuffer);
+        }
     }
 }
 
@@ -174,38 +187,49 @@ void liberateThem(node* root) {
 bool launchInOrder(node* root) {
     node* currentNode = root;
 
-    if(currentNode->next == NULL) {
-        createProcessAndExecuteCmd(currentNode, NULL);
+    if(currentNode->next == NULL && currentNode->executed == false) {
+        createProcessAndExecuteCmd(currentNode, 0, true);
     }
 
     while(currentNode->next != 0) {
 
         if(strcmp(currentNode->command, "&&") == 0) {
-            if(currentNode->previous->response == 0) {
-                createProcessAndExecuteCmd(currentNode->previous, NULL);
+            if(currentNode->previous->executed == false) {
+                createProcessAndExecuteCmd(currentNode->previous, 0, true);
             }
-            if(currentNode->previous->success == 0 && currentNode->next != NULL) {
-                createProcessAndExecuteCmd(currentNode->next, currentNode->previous->response);
-            } else if (currentNode->previous->success  != 0){
+            if(currentNode->previous->executed == true && currentNode->previous->success == 0 && currentNode->next != NULL) {
+                createProcessAndExecuteCmd(currentNode->next, 0, true);
+            } else if (currentNode->executed == true && currentNode->previous->success  != 0){
                 printf("Error while executing [%s] : code[%d] => %s", currentNode->previous->command, currentNode->previous->success, strerror(currentNode->previous->success));
                 exit(currentNode->previous->success);
             }
         } else if (strcmp(currentNode->command, "||") == 0) {
-            if(currentNode->previous->response == 0) {
-                createProcessAndExecuteCmd(currentNode->previous, NULL);
+            if(currentNode->previous->executed == false) {
+                createProcessAndExecuteCmd(currentNode->previous, 0, true);
             }
-            if(currentNode->previous->success != 0 && currentNode->next != NULL) {
-                createProcessAndExecuteCmd(currentNode->next, currentNode->previous->response);
+            if(currentNode->previous->executed == true && currentNode->previous->success != 0 && currentNode->next != NULL) {
+                createProcessAndExecuteCmd(currentNode->next, 0, true);
             }
         } else if(strcmp(currentNode->command, "|") == 0) {
-            if(currentNode->previous->response == 0) {
-                createProcessAndExecuteCmd(currentNode->previous, NULL);
+            if(currentNode->previous->executed == false) {
+                createProcessAndExecuteCmd(currentNode->previous, 0, false);
             }
-            if(currentNode->previous->success == 0 && currentNode->next != NULL) {
-                createProcessAndExecuteCmd(currentNode->next, NULL);
+
+            if(currentNode->previous->executed == true && currentNode->previous->success == 0 && currentNode->next != NULL) {
+                int file_response = fileno(fopen("tmp_command", "r"));
+                createProcessAndExecuteCmd(currentNode->next, file_response, true);
+                close(file_response);
+                
             } else if(currentNode->previous->success != 0) {
                 printf("Error while executing [%s] : %s", currentNode->previous->command, strerror(currentNode->success));
                 exit(currentNode->previous->success);
+            }
+        } else if(strcmp(currentNode->command, ";") == 0) {
+            if(currentNode->previous->response == 0) {
+                createProcessAndExecuteCmd(currentNode->previous, 0, true);
+            }
+            if(currentNode->next->response == 0) {
+                createProcessAndExecuteCmd(currentNode->next, 0, true);
             }
         }
         
@@ -253,6 +277,7 @@ int buildChain(char *command) {
     }
 
     launchInOrder(root);
+    liberateThem(root);
     return 0;
 }
 

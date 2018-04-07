@@ -6,7 +6,8 @@ typedef enum { false, true } bool;
 typedef struct node {
     char *command;
     int success;
-    char *response;
+    FILE *response;
+    bool executed;
     struct node *previous;
     struct node *next;
 } node;

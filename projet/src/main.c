@@ -150,7 +150,7 @@ void createProcessAndExecuteCmd(node* element, int input, bool lastCommand) {
         exit(errno);
     } else {
         int status_id = -1;
-        char readbuffer[4096];
+        char readbuffer[32767];
 
         wait(&status_id);
 
@@ -165,7 +165,7 @@ void createProcessAndExecuteCmd(node* element, int input, bool lastCommand) {
             element->response = fopen("tmp_command", "w+");
             fprintf(element->response, readbuffer);
             fclose(element->response);
-            memset(readbuffer, 0, 4096);
+            memset(readbuffer, 0, 32767);
         } else {
             read(link[0], readbuffer, sizeof(readbuffer));
             printf("%s\n", readbuffer);

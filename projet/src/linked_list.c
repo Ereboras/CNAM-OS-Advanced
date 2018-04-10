@@ -1,6 +1,6 @@
 /**
  * \file linked_list.c
- * \brief Fichier des fonctions de la liste chaînée
+ * \brief File for linked list functions
  * \author Emilie AM et Mohamed A
  */
 #include <stdlib.h>

@@ -1,12 +1,12 @@
 /**
  * \file main.c
- * \author Emilie AM et Mohamed A
+ * \author Emilie AM and Mohamed A
  */
-#include<stdio.h>
-#include<stdlib.h>
-#include<string.h>
-#include<errno.h>
-#include<unistd.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <errno.h>
+#include <unistd.h>
 #include <sys/wait.h>
 #include <fcntl.h>
 #include "../headers/main.h"

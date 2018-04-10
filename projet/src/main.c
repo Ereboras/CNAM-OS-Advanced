@@ -31,6 +31,16 @@ char *inputString(FILE* fp, size_t size){
     return realloc(str, sizeof(char)*len);
 }
 
+int copyFile(FILE* filesrc, FILE* filedest) {
+    char content[80];
+    while(fgets(content, sizeof(content), filesrc) !=NULL) {
+        fputs(content, filedest);
+    }
+    fclose(filedest);
+    fclose(filesrc);
+    return 0;
+}
+
 bool isOperator(char* operator) {
     if ((strcmp(operator, ";") == 0) || 
         (strcmp(operator, "|") == 0) || 
@@ -231,6 +241,22 @@ bool launchInOrder(node* root) {
             if(currentNode->next->response == 0) {
                 createProcessAndExecuteCmd(currentNode->next, 0, true);
             }
+        }  else if(strcmp(currentNode->command, ">") == 0) {
+            createProcessAndExecuteCmd(currentNode->previous, 0, false);
+            FILE *filedest = fopen(currentNode->next->command, "w");
+            FILE *filesrc = fopen("tmp_command", "r");
+            copyFile(filesrc, filedest);
+        } else if(strcmp(currentNode->command, ">>") == 0) {
+            createProcessAndExecuteCmd(currentNode->previous, 0, false);
+            FILE *filedest = fopen(currentNode->next->command, "a");
+            FILE *filesrc = fopen("tmp_command", "r");
+            copyFile(filesrc, filedest);
+        } else if(strcmp(currentNode->command, "<") == 0) {
+            int file_response = fileno(fopen(currentNode->next->command, "r"));
+            createProcessAndExecuteCmd(currentNode->previous, file_response, true);
+            close(file_response);
+        } else if(strcmp(currentNode->command, "<<") == 0) {
+            // TODO T_T
         }
         
         currentNode = currentNode->next;

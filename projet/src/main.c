@@ -257,6 +257,20 @@ bool launchInOrder(node* root) {
             close(file_response);
         } else if(strcmp(currentNode->command, "<<") == 0) {
             // TODO T_T
+            FILE *tmpfile = fopen("tmp_command", "w+");
+            char *text;
+            text = "0000000000";
+            while(strcmp(currentNode->next->command, text) != 0) {
+                printf(">");
+                text = inputString(stdin, 10);
+                if(strcmp(currentNode->next->command, text) != 0) {
+                    fputs(text, tmpfile);
+                    fputs("\n", tmpfile);
+                }
+            }
+
+            createProcessAndExecuteCmd(currentNode->previous, fileno(tmpfile), true);
+            fclose(tmpfile);
         }
         
         currentNode = currentNode->next;

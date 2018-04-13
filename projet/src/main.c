@@ -98,34 +98,41 @@ void executeCmd(node* element) {
     char* program = malloc(sizeof(element->command));
     strcpy(program, element->command);
     char* cmd = strtok(program, " ");
+    char *args[20];
+    int i;
+
+    for(i = 0; cmd != NULL; i++) {
+        args[i] = cmd;
+        cmd = strtok(NULL, " ");
+    }
+    args[i] = NULL;
     
-    if(strcmp(cmd, "cd") == 0) {
-        char* path = strtok(NULL, " ");
-        element->success = changeDir(path);
-    } else if(strcmp(cmd, "pwd") == 0) {
+    if(strcmp(args[0], "cd") == 0) {
+        element->success = changeDir(args[1]);
+    } else if(strcmp(args[0], "pwd") == 0) {
         char path[8192];
         element->success = currentPosition(path, 8192);
-        element->response = NULL;
-    } else if(strcmp(cmd, "exit") == 0) {
+        if(element->success == 0) {
+            printf(path);
+        }
+    } else if(strcmp(args[0], "exit") == 0) {
         element->success = 0;
         exit(0);
-    } else if(strcmp(cmd, "echo") == 0) {
-        printf(element->command);
+    } else if(strcmp(args[0], "echo") == 0) {
+        i = 1;
+        while(args[i] != NULL) {
+            printf("%s ", args[i]);
+            i++;
+        }
+        
         element->success = 0;
     } else {
-        char *args[10];
-        int i;
-
-        for(i = 0; cmd != NULL; i++) {
-            args[i] = cmd;
-            cmd = strtok(NULL, " ");
-        }
-        args[i] = NULL;
         element->success = 0;
         if(execvp(args[0], args) == -1) {
             exit(errno);
         }
     }
+    free(program);
 }
 
 void createProcessAndExecuteCmd(node* element, int input, bool lastCommand) {
@@ -160,7 +167,7 @@ void createProcessAndExecuteCmd(node* element, int input, bool lastCommand) {
         exit(errno);
     } else {
         int status_id = -1;
-        char readbuffer[32767];
+        char readbuffer[32000];
 
         wait(&status_id);
 
@@ -175,11 +182,10 @@ void createProcessAndExecuteCmd(node* element, int input, bool lastCommand) {
             element->response = fopen("tmp_command", "w+");
             fprintf(element->response, readbuffer);
             fclose(element->response);
-            memset(readbuffer, 0, 32767);
         } else {
-            read(link[0], readbuffer, sizeof(readbuffer));
             printf("%s\n", readbuffer);
         }
+        memset(readbuffer, 0, 32000);
     }
 }
 
@@ -194,11 +200,27 @@ void liberateThem(node* root) {
     }
 }
 
+int openCommandFile(char *action) {
+    FILE *file = fopen("tmp_command", action);
+    if(file == NULL) {
+        return -1;
+    }
+    return fileno(file);
+}
+
+void printCommandError(char* command, int error) {
+    printf("Error while executing [%s] : code[%d] => %s\n", command, error, strerror(error));
+}
+
 bool launchInOrder(node* root) {
     node* currentNode = root;
 
     if(currentNode->next == NULL && currentNode->executed == false) {
         createProcessAndExecuteCmd(currentNode, 0, true);
+        if(currentNode->executed == true && currentNode->success != 0) {
+            printCommandError(currentNode->command, currentNode->success);
+            exit(currentNode->success);
+        }
     }
 
     while(currentNode->next != 0) {
@@ -207,17 +229,18 @@ bool launchInOrder(node* root) {
             if(currentNode->previous->executed == false) {
                 createProcessAndExecuteCmd(currentNode->previous, 0, true);
             }
-            if(currentNode->previous->executed == true && currentNode->previous->success == 0 && currentNode->next != NULL) {
+            
+            if(currentNode->previous->executed == true && currentNode->previous->success == 0 && currentNode->next->executed == false) {
                 createProcessAndExecuteCmd(currentNode->next, 0, true);
-            } else if (currentNode->executed == true && currentNode->previous->success  != 0){
-                printf("Error while executing [%s] : code[%d] => %s", currentNode->previous->command, currentNode->previous->success, strerror(currentNode->previous->success));
+            } else if (currentNode->previous->executed == true && currentNode->previous->success  != 0){
+                printCommandError(currentNode->previous->command, currentNode->previous->success);
                 exit(currentNode->previous->success);
             }
         } else if (strcmp(currentNode->command, "||") == 0) {
             if(currentNode->previous->executed == false) {
                 createProcessAndExecuteCmd(currentNode->previous, 0, true);
             }
-            if(currentNode->previous->executed == true && currentNode->previous->success != 0 && currentNode->next != NULL) {
+            if(currentNode->previous->executed == true && currentNode->previous->success != 0 && currentNode->next->executed == false) {
                 createProcessAndExecuteCmd(currentNode->next, 0, true);
             }
         } else if(strcmp(currentNode->command, "|") == 0) {
@@ -226,51 +249,100 @@ bool launchInOrder(node* root) {
             }
 
             if(currentNode->previous->executed == true && currentNode->previous->success == 0 && currentNode->next != NULL) {
-                int file_response = fileno(fopen("tmp_command", "r"));
-                createProcessAndExecuteCmd(currentNode->next, file_response, true);
-                close(file_response);
-                
+                int filenum = openCommandFile("r");
+                if(filenum >= 0) {
+                    createProcessAndExecuteCmd(currentNode->next, filenum, true);
+                    close(filenum);
+                } else {
+                    printCommandError(currentNode->previous->command, currentNode->previous->success);
+                }
             } else if(currentNode->previous->success != 0) {
-                printf("Error while executing [%s] : %s", currentNode->previous->command, strerror(currentNode->success));
+                printCommandError(currentNode->previous->command, currentNode->previous->success);
                 exit(currentNode->previous->success);
             }
         } else if(strcmp(currentNode->command, ";") == 0) {
-            if(currentNode->previous->response == 0) {
+            if(currentNode->previous->executed == false) {
                 createProcessAndExecuteCmd(currentNode->previous, 0, true);
+                if(currentNode->previous->success != 0) {
+                    printCommandError(currentNode->previous->command, currentNode->previous->success);
+                }
             }
-            if(currentNode->next->response == 0) {
+            if(currentNode->next->executed == false) {
                 createProcessAndExecuteCmd(currentNode->next, 0, true);
+                if(currentNode->next->success != 0) {
+                    printCommandError(currentNode->next->command, currentNode->next->success);
+                }
             }
         }  else if(strcmp(currentNode->command, ">") == 0) {
             createProcessAndExecuteCmd(currentNode->previous, 0, false);
+            if(currentNode->previous->success != 0) {
+                printCommandError(currentNode->previous->command, currentNode->previous->success);
+                exit(currentNode->previous->success);
+            }
             FILE *filedest = fopen(currentNode->next->command, "w");
             FILE *filesrc = fopen("tmp_command", "r");
-            copyFile(filesrc, filedest);
+            if(filedest != NULL && filesrc != NULL) {
+                copyFile(filesrc, filedest);
+            } else {
+                printCommandError(currentNode->next->command, errno);
+                exit(errno);
+            }
         } else if(strcmp(currentNode->command, ">>") == 0) {
             createProcessAndExecuteCmd(currentNode->previous, 0, false);
+            if(currentNode->previous->success != 0) {
+                printCommandError(currentNode->previous->command, currentNode->previous->success);
+                exit(currentNode->previous->success);
+            }
             FILE *filedest = fopen(currentNode->next->command, "a");
             FILE *filesrc = fopen("tmp_command", "r");
-            copyFile(filesrc, filedest);
+            if(filedest != NULL && filesrc != NULL) {
+                copyFile(filesrc, filedest);
+            } else {
+                printCommandError(currentNode->next->command, errno);
+                exit(errno);
+            }
         } else if(strcmp(currentNode->command, "<") == 0) {
-            int file_response = fileno(fopen(currentNode->next->command, "r"));
-            createProcessAndExecuteCmd(currentNode->previous, file_response, true);
-            close(file_response);
+            FILE *file = fopen(currentNode->next->command, "r");
+            if(file == NULL) {
+                printCommandError(currentNode->next->command, errno);
+                exit(errno);
+            }
+            int tmpfileint = fileno(file);
+            if(tmpfileint == -1) {
+                printCommandError(currentNode->next->command, errno);
+                exit(errno);
+            }
+            createProcessAndExecuteCmd(currentNode->previous, tmpfileint, true);
+            close(tmpfileint);
         } else if(strcmp(currentNode->command, "<<") == 0) {
-            // TODO T_T
-            FILE *tmpfile = fopen("tmp_command", "w+");
+            FILE *file = fopen("tmp_command", "w+");
+            if(file == NULL) {
+                printCommandError(currentNode->next->command, errno);
+                exit(errno);
+            }
+            int tmpfileint = fileno(file);
+            if(tmpfileint == -1) {
+                printCommandError(currentNode->next->command, errno);
+                exit(errno);
+            }
             char *text;
             text = "0000000000";
             while(strcmp(currentNode->next->command, text) != 0) {
                 printf(">");
                 text = inputString(stdin, 10);
                 if(strcmp(currentNode->next->command, text) != 0) {
-                    fputs(text, tmpfile);
-                    fputs("\n", tmpfile);
+                    fputs(text, file);
+                    fputs("\n", file);
                 }
             }
+            fputs("\0", file);
+            fclose(file);
+            free(text);
 
-            createProcessAndExecuteCmd(currentNode->previous, fileno(tmpfile), true);
-            fclose(tmpfile);
+            file = fopen("tmp_command", "r");
+            tmpfileint = fileno(file);
+            createProcessAndExecuteCmd(currentNode->previous, tmpfileint, true);
+            fclose(file);
         }
         
         currentNode = currentNode->next;

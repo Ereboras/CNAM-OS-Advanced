@@ -93,52 +93,52 @@ int changeDir(char *path) {
     return 0;
 }
 
-void executeCmd(node* element) {
-    
-    char* program = malloc(sizeof(element->command));
-    strcpy(program, element->command);
-    char* cmd = strtok(program, " ");
-    char *args[20];
-    int i;
-
-    for(i = 0; cmd != NULL; i++) {
-        args[i] = cmd;
-        cmd = strtok(NULL, " ");
-    }
-    args[i] = NULL;
-    
-    if(strcmp(args[0], "cd") == 0) {
-        element->success = changeDir(args[1]);
-    } else if(strcmp(args[0], "pwd") == 0) {
-        char path[8192];
-        element->success = currentPosition(path, 8192);
-        if(element->success == 0) {
-            printf(path);
-        }
-    } else if(strcmp(args[0], "exit") == 0) {
-        element->success = 0;
-        exit(0);
-    } else if(strcmp(args[0], "echo") == 0) {
-        i = 1;
-        while(args[i] != NULL) {
-            printf("%s ", args[i]);
-            i++;
-        }
-        
-        element->success = 0;
-    } else {
-        element->success = 0;
-        if(execvp(args[0], args) == -1) {
-            exit(errno);
-        }
-    }
-    free(program);
+void doCd(node* element, char *args[20]) {
+    element->success = changeDir(args[1]);
 }
 
-void createProcessAndExecuteCmd(node* element, int input, bool lastCommand) {
+void doExit(node *element) {
+    element->success = 0;
+    exit(0);
+}
+
+void doEcho(node *element, char *args[20], char *buffer) {
+    int i = 2;
+    strcpy(buffer, args[1]);
+    strcat(buffer, " ");
+    while(args[i] != NULL) {
+        strcat(buffer, args[i]);
+        strcat(buffer, " ");
+        i++;
+    }
     
+    element->success = 0;
+}
+
+void doPwd(node* element, char *buffer, int size) {
+    element->success = currentPosition(buffer, size);
+}
+
+void doExternCommand(node* element, char *args[20]) {
+    element->success = 0;
+    if(execvp(args[0], args) == -1) {
+        exit(errno);
+    }
+}
+
+void resultInFile(node *element, bool lastCommand, char readbuffer[32000]) {
+    if(!lastCommand) {
+        element->response = fopen("tmp_command", "w+");
+        fprintf(element->response, readbuffer);
+        fclose(element->response);
+    } else {
+        printf("%s\n", readbuffer);
+    }
+}
+
+void forkAndRedirectCmd(node *element, char *args[20], bool lastCommand, int input) {
+
     int link[2];
-    element->executed = true;
 
     if(pipe(link) == -1) {
         printf("Error when creating pipe : %s", strerror(errno));
@@ -151,7 +151,6 @@ void createProcessAndExecuteCmd(node* element, int input, bool lastCommand) {
         printf("Error when creating child process: %s", strerror(errno));
         exit(errno);
     } else if(pid == 0) {
-        // printf("Execute command %s\n", element->command);
 
         if(input != 0) {
             dup2(input, STDIN_FILENO);
@@ -162,7 +161,7 @@ void createProcessAndExecuteCmd(node* element, int input, bool lastCommand) {
         close(link[0]);
         close(link[1]);
         
-        executeCmd(element);
+        doExternCommand(element, args);
         
         exit(errno);
     } else {
@@ -178,14 +177,45 @@ void createProcessAndExecuteCmd(node* element, int input, bool lastCommand) {
 
         close(link[1]);
         read(link[0], readbuffer, sizeof(readbuffer));
-        if(!lastCommand) {
-            element->response = fopen("tmp_command", "w+");
-            fprintf(element->response, readbuffer);
-            fclose(element->response);
-        } else {
-            printf("%s\n", readbuffer);
-        }
+        resultInFile(element, lastCommand, readbuffer);
         memset(readbuffer, 0, 32000);
+    }
+}
+
+void createProcessAndExecuteCmd(node* element, int input, bool lastCommand) {
+    
+    element->executed = true; 
+
+    // Seperate command & args
+    char* program = malloc(sizeof(element->command));
+    strcpy(program, element->command);
+    char* cmd = strtok(program, " ");
+    char *args[20];
+    int i;
+    
+    for(i = 0; cmd != NULL; i++) {
+        args[i] = cmd;
+        cmd = strtok(NULL, " ");
+    }
+    args[i] = NULL;
+
+    // Execute built-in command
+    if(strcmp(args[0], "cd") == 0) {
+        doCd(element, args);
+    } else if(strcmp(args[0], "pwd") == 0) {
+        char buffer[8192];
+        doPwd(element, buffer, 8192);
+        resultInFile(element, lastCommand, buffer);
+    } else if(strcmp(args[0], "exit") == 0) {
+        doExit(element);
+    } else if(strcmp(args[0], "echo") == 0) {
+        char buffer[1024];
+        doEcho(element, args, buffer);
+        resultInFile(element, lastCommand, buffer);
+    }
+
+    if(!isBuiltInCommand(args[0])) {
+        forkAndRedirectCmd(element, args, lastCommand, input);
     }
 }
 

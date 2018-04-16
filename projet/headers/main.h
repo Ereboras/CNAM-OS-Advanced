@@ -2,6 +2,9 @@
 #define FILE_MAIN_HEADER
 
 #include "../headers/typedef.h"
+#include "../headers/commands.h"
+
+
 
 /**
  * \fn inputString(FILE* fp, size_t size)
@@ -49,25 +52,6 @@ bool isBuiltInCommand(char* cmd);
  * \return void
  */
 void logAction(char* command);
-
-/**
- * \fn currentPosition(char* path, int size)
- * \brief Get the current position of the user
- * 
- * \param path The string to register the path
- * \param size size of the string
- * \return int
- */
-int currentPosition(char* path, int size);
-
-/**
- * \fn changeDir(char *path)
- * \brief Change the directory of the user
- * 
- * \param path The path to where the user want to move
- * \return int
- */
-int changeDir(char *path);
 
 /**
  * \fn executeCmd(node* element)

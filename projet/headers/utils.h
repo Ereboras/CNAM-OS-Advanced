@@ -36,12 +36,31 @@ int copyFile(FILE* filesrc, FILE* filedest);
 bool isOperator(char* operator);
 
 /**
- * \fn isBuiltInCommand(char* cmd)
+ * \fn isBuiltInCommand(char *cmd)
  * \brief Check if string is a built in command
  * 
- * \param operator String to check
+ * \param cmd String to check
  * \return bool
  */
-bool isBuiltInCommand(char* cmd);
+bool isBuiltInCommand(char *cmd);
+
+/**
+ * \fn openCommandFile(char *action)
+ * \brief Open the file for commands
+ * 
+ * \param action Write or read file
+ * \return int
+ */
+int openCommandFile(char *action);
+
+/**
+ * \fn printCommandError(char *command, int error)
+ * \brief Open the file for commands
+ * 
+ * \param command Command where the error occured
+ * \param error Error code
+ * \return void
+ */
+void printCommandError(char* command, int error);
 
 #endif

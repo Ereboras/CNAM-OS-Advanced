@@ -55,3 +55,15 @@ bool isBuiltInCommand(char* cmd) {
         return false;
     }
 }
+
+int openCommandFile(char *action) {
+    FILE *file = fopen("tmp_command", action);
+    if(file == NULL) {
+        return -1;
+    }
+    return fileno(file);
+}
+
+void printCommandError(char* command, int error) {
+    printf("Error while executing [%s] : code[%d] => %s\n", command, error, strerror(error));
+}

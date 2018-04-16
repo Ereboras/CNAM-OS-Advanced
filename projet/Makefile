@@ -48,6 +48,7 @@ package: gcov doc all
 
 clean:
 	rm -rf $(SRC_DIR)/*.o
+	rm tmp_command
 
 mrproper: clean
 	rm -rf $(BIN_DIR)/*

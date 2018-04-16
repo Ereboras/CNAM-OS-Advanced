@@ -1,2 +1,0 @@
-Ceci est un fichier txt de test pour les commandes relou <<, < et >, >>
-5

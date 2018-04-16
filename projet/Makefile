@@ -48,9 +48,10 @@ package: gcov doc all
 
 clean:
 	rm -rf $(SRC_DIR)/*.o
-	rm tmp_command
+	
 
 mrproper: clean
-	rm -rf $(BIN_DIR)/*
+	rm -rf $(BIN_DIR)/* $(DOC_DIR)/html $(DOC_DIR)/latex
+	rm tmp_command
 
 .PHONY: clean doc

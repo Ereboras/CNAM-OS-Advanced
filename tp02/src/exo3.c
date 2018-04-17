@@ -30,16 +30,16 @@ int main(int argc, char** argv)
 	// "root est connecté"
 
 	int statval1, statval2;
-	int test[2];
+	int fd[2];
 
 	// Création du pipe
-	pipe(test);
+	pipe(fd);
 
 	if ( fork() == 0 ) {
 
-		close(test[0]);
-		dup2(test[1], 1);
-		close(test[1]);
+		close(fd[0]);
+		dup2(fd[1], 1);
+		close(fd[1]);
 
 		// Execute la commande ps eaux
 		execlp ("ps", "ps", "eaux", (void*)0);
@@ -52,8 +52,8 @@ int main(int argc, char** argv)
 	if (fork() == 0 )
 	{
 		char buffer[1024];
-		close(test[1]);
-		dup2(test[0], 0);
+		close(fd[1]);
+		dup2(fd[0], 0);
 
 		// Création du fichier dans /dev/null
 		int fd = open("/dev/null", O_WRONLY);
@@ -67,8 +67,8 @@ int main(int argc, char** argv)
 		exit(1);
 	}
 
-	close(test[1]);
-	close(test[0]);
+	close(fd[1]);
+	close(fd[0]);
 
 	// Attend la fin des processus
 	wait(&statval1);

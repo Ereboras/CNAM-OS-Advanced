@@ -11,24 +11,21 @@
 
 int main(int argc, char** argv){
 
-	if(argc <= 1 )
-    {
+	if(argc <= 1 ) {
         dprintf(STDERR, "One argument is required.\n");
        	exit(EXIT_FAILURE);
     }
-    else
-    {
+    else {
         dprintf(STDOUT, "Le premiere argument saisi est : %s\n", argv[1]);
     }
 
 	int f;
 	int status;
 	f = fork();
-	if(f==0)
-	{
+	if(f==0) {
 		printf("PID du fils : %d\n", getpid());
 	    close(STDERR);
-	    static char template[] = "/tmp/proc-exerciceXXXXXX";
+	    static char template[] = "/tmp/proc-exercice";
 	    char fname[25];
 	    strcpy(fname, template);
 	    int fd = mkstemp(fname);
@@ -38,12 +35,11 @@ int main(int argc, char** argv){
 	    perror("Erreur : ");
 	    exit(1);
 	}
-	else
-	{
+	else {
 		int retour = 0;
     	printf("PID du père : %d\n", getpid());
     	wait(&retour);
-    	dprintf(STDERR, "Message quelconque !\n");
+    	dprintf(STDERR, "Un message à caractère informatif\n");
     	dprintf(STDOUT, "That's All Folks !\n");
 	}
 

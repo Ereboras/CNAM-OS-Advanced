@@ -2,7 +2,8 @@
 
 ## Generating files
 
-To compile, you just need to use make at the root of the project.  
+To compile, you just need to use **make** at the root of the project.  
+For doc generation, use **make doc**.
 
 ## Features
 
@@ -30,3 +31,8 @@ Optional features :
 - [X] CTO01 - Use doxygen
 - [ ] CTO02 - Use gcov
 - [X] CTO02 - User manual
+
+## Authors
+
+Abdul-Malik Emilie  
+Azzouz Mohamed 

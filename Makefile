@@ -15,7 +15,7 @@ LCOV_REPORT=report.info
 SRC=$(wildcard $(SRC_DIR)/*.c)
 OBJ=$(SRC:.c=.o)
 
-EXEC=prog
+EXEC=shelltan
 
 GEXEC=$(EXEC).cov
 

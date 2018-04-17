@@ -55,7 +55,7 @@ int openCommandFile(char *action);
 
 /**
  * \fn printCommandError(char *command, int error)
- * \brief Open the file for commands
+ * \brief Display error with command
  * 
  * \param command Command where the error occured
  * \param error Error code

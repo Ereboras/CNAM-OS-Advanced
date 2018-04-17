@@ -1,6 +1,7 @@
 /**
- * \file main.c
- * \author Emilie AM and Mohamed A
+ * \file shelltan.c
+ * \brief Main file, managing the linked list
+ * \author Emilie AM et Mohamed A
  */
 #include <stdio.h>
 #include <stdlib.h>
@@ -9,9 +10,10 @@
 #include <unistd.h>
 #include <sys/wait.h>
 #include <fcntl.h>
-#include "../headers/main.h"
+#include "../headers/shelltan.h"
 #include "../headers/linked_list.h"
 
+// Log action of user
 void logAction(char* action) {
     FILE *fp = fopen("bin/log", "a");
     if(fp) {
@@ -23,6 +25,7 @@ void logAction(char* action) {
     }
 }
 
+// Put response of command in a file for the next command or display it if this is the last command
 void resultInFile(node *element, bool lastCommand, char readbuffer[32000]) {
     if(!lastCommand) {
         element->response = fopen("tmp_command", "w+");
@@ -33,6 +36,7 @@ void resultInFile(node *element, bool lastCommand, char readbuffer[32000]) {
     }
 }
 
+// Manage child / parent process and input / output
 void forkAndRedirectCmd(node *element, char *args[20], bool lastCommand, int input) {
 
     int link[2];
@@ -68,7 +72,6 @@ void forkAndRedirectCmd(node *element, char *args[20], bool lastCommand, int inp
         wait(&status_id);
 
         if ( WIFEXITED(status_id) ) {
-            // printf("Exit status was %d\n", WEXITSTATUS(status_id));
             element->success = status_id;
         }
 
@@ -79,6 +82,7 @@ void forkAndRedirectCmd(node *element, char *args[20], bool lastCommand, int inp
     }
 }
 
+// Check if command is built-in or external command and redirect to correct function
 void createProcessAndExecuteCmd(node* element, int input, bool lastCommand) {
     
     element->executed = true; 
@@ -111,11 +115,13 @@ void createProcessAndExecuteCmd(node* element, int input, bool lastCommand) {
         resultInFile(element, lastCommand, buffer);
     }
 
+    // External command
     if(!isBuiltInCommand(args[0])) {
         forkAndRedirectCmd(element, args, lastCommand, input);
     }
 }
 
+// Free the double linked list
 void liberateThem(node* root) {
     struct node* tmp;
 
@@ -127,9 +133,11 @@ void liberateThem(node* root) {
     }
 }
 
+// Execute commands in order according to operators
 bool launchInOrder(node* root) {
     node* currentNode = root;
 
+    // The last command to execute
     if(currentNode->next == NULL && currentNode->executed == false) {
         createProcessAndExecuteCmd(currentNode, 0, true);
         if(currentNode->executed == true && currentNode->success != 0) {
@@ -138,8 +146,10 @@ bool launchInOrder(node* root) {
         }
     }
 
+    // Loop through the double linked list
     while(currentNode->next != 0) {
-
+        
+        // For && operator
         if(strcmp(currentNode->command, "&&") == 0) {
             if(currentNode->previous->executed == false) {
                 createProcessAndExecuteCmd(currentNode->previous, 0, true);
@@ -151,14 +161,18 @@ bool launchInOrder(node* root) {
                 printCommandError(currentNode->previous->command, currentNode->previous->success);
                 exit(currentNode->previous->success);
             }
-        } else if (strcmp(currentNode->command, "||") == 0) {
+        } 
+        // For || operator
+        else if (strcmp(currentNode->command, "||") == 0) {
             if(currentNode->previous->executed == false) {
                 createProcessAndExecuteCmd(currentNode->previous, 0, true);
             }
             if(currentNode->previous->executed == true && currentNode->previous->success != 0 && currentNode->next->executed == false) {
                 createProcessAndExecuteCmd(currentNode->next, 0, true);
             }
-        } else if(strcmp(currentNode->command, "|") == 0) {
+        } 
+        // For | operator
+        else if(strcmp(currentNode->command, "|") == 0) {
             if(currentNode->previous->executed == false) {
                 createProcessAndExecuteCmd(currentNode->previous, 0, false);
             }
@@ -175,7 +189,9 @@ bool launchInOrder(node* root) {
                 printCommandError(currentNode->previous->command, currentNode->previous->success);
                 exit(currentNode->previous->success);
             }
-        } else if(strcmp(currentNode->command, ";") == 0) {
+        } 
+        // For ; operator
+        else if(strcmp(currentNode->command, ";") == 0) {
             if(currentNode->previous->executed == false) {
                 createProcessAndExecuteCmd(currentNode->previous, 0, true);
                 if(currentNode->previous->success != 0) {
@@ -188,7 +204,9 @@ bool launchInOrder(node* root) {
                     printCommandError(currentNode->next->command, currentNode->next->success);
                 }
             }
-        }  else if(strcmp(currentNode->command, ">") == 0) {
+        }  
+        // For > operator
+        else if(strcmp(currentNode->command, ">") == 0) {
             createProcessAndExecuteCmd(currentNode->previous, 0, false);
             if(currentNode->previous->success != 0) {
                 printCommandError(currentNode->previous->command, currentNode->previous->success);
@@ -202,7 +220,9 @@ bool launchInOrder(node* root) {
                 printCommandError(currentNode->next->command, errno);
                 exit(errno);
             }
-        } else if(strcmp(currentNode->command, ">>") == 0) {
+        } 
+        // For >> operator
+        else if(strcmp(currentNode->command, ">>") == 0) {
             createProcessAndExecuteCmd(currentNode->previous, 0, false);
             if(currentNode->previous->success != 0) {
                 printCommandError(currentNode->previous->command, currentNode->previous->success);
@@ -216,7 +236,9 @@ bool launchInOrder(node* root) {
                 printCommandError(currentNode->next->command, errno);
                 exit(errno);
             }
-        } else if(strcmp(currentNode->command, "<") == 0) {
+        } 
+        // For < operator
+        else if(strcmp(currentNode->command, "<") == 0) {
             FILE *file = fopen(currentNode->next->command, "r");
             if(file == NULL) {
                 printCommandError(currentNode->next->command, errno);
@@ -229,7 +251,9 @@ bool launchInOrder(node* root) {
             }
             createProcessAndExecuteCmd(currentNode->previous, tmpfileint, true);
             close(tmpfileint);
-        } else if(strcmp(currentNode->command, "<<") == 0) {
+        } 
+        // For << operator
+        else if(strcmp(currentNode->command, "<<") == 0) {
             FILE *file = fopen("tmp_command", "w+");
             if(file == NULL) {
                 printCommandError(currentNode->next->command, errno);
@@ -240,6 +264,7 @@ bool launchInOrder(node* root) {
                 printCommandError(currentNode->next->command, errno);
                 exit(errno);
             }
+            // Check if the user end the input with the corresponding string
             char *text;
             text = "0000000000";
             while(strcmp(currentNode->next->command, text) != 0) {
@@ -254,6 +279,7 @@ bool launchInOrder(node* root) {
             fclose(file);
             free(text);
 
+            // Execute command on the input of user
             file = fopen("tmp_command", "r");
             tmpfileint = fileno(file);
             createProcessAndExecuteCmd(currentNode->previous, tmpfileint, true);
@@ -266,6 +292,7 @@ bool launchInOrder(node* root) {
     return true;
 }
 
+// Display the linked list (only for debug)
 void displayChain(node* root) {
     printf("%s", root->command);
     if(root->next != 0) {
@@ -273,6 +300,7 @@ void displayChain(node* root) {
     }
 }
 
+// Build the linked list
 int buildChain(char *command) {
     char *token;
     node *root;
@@ -285,6 +313,7 @@ int buildChain(char *command) {
     current = root;
     token = strtok(NULL, " ");
 
+    // Separate by space operators and commands
     while(token != NULL) {
         if (isOperator(token) == true) {
             current = createNodeAndLinkNext(current, token);
@@ -308,6 +337,7 @@ int buildChain(char *command) {
     return 0;
 }
 
+// If user want to enter multiple command
 void interactiveMode() {
     char *command;
     char path[8192];
@@ -324,6 +354,7 @@ void interactiveMode() {
     exit(success);
 }
 
+// Check if user execute in batch (one command) or interactive (multiple command) mode
 void checkMode(int sizeCommand, char *commands[]) {
     if(sizeCommand == 1) {
         printf("Activate interactive mode\n");

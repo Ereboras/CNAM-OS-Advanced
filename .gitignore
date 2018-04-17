@@ -52,7 +52,7 @@ Mkfile.old
 dkms.conf
 
 #Personal files
-*/bin/*
-projet/doc/html
-projet/doc/latex
-projet/tmp_command
+bin/*
+doc/html
+doc/latex
+tmp_command

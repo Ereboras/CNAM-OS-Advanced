@@ -5,7 +5,6 @@
 #include "../headers/utils.h"
 #include "../headers/commands.h"
 
-
 /**
  * \fn logAction(char* command)
  * \brief Register commands in a log file
@@ -16,20 +15,34 @@
 void logAction(char* command);
 
 /**
- * \fn executeCmd(node* element)
- * \brief Execute the command in the node
+ * \fn resultInFile(node *element, bool lastCommand, char readbuffer[32000])
+ * \brief Register commands response in a file or display it
  * 
- * \param element The node of the command
+ * \param element Command
+ * \param lastCommand Is this the last command or not
+ * \param readbuffer Buffer of response
  * \return void
  */
-void executeCmd(node* element);
+void resultInFile(node* element, bool lastCommand, char readbuffer[32000]);
 
 /**
- * \fn void createProcessAndExecuteCmd(node* element, int input, bool lastCommand)
- * \brief Manage the I/O and process to execute commands
+ * \fn void forkAndRedirectCmd(node *element, char *args[20], bool lastCommand, int input)
+ * \brief Manage child / parent process and input / output
  * 
  * \param element The node of the command
- * \param input The input for the command
+ * \param args Arguments of the command
+ * \param lastCommand Is it the last command of the line
+ * \param input Input of the command
+ * \return void
+ */
+void forkAndRedirectCmd(node *element, char *args[20], bool lastCommand, int input);
+
+/**
+ * \fn void forkAndRedirectCmd(node *element, char *args[20], bool lastCommand, int input)
+ * \brief Check if command is built-in or external command and redirect to correct function
+ * 
+ * \param element The node of the command
+ * \param input Input of the command
  * \param lastCommand Is it the last command of the line
  * \return void
  */

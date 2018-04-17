@@ -1,3 +1,8 @@
+/**
+ * \file commands.c
+ * \brief File for built-in and external commands
+ * \author Emilie AM et Mohamed A
+ */
 #include "../headers/commands.h"
 
 int currentPosition(char* cwd, int size) {

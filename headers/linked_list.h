@@ -5,7 +5,7 @@
 
 /**
  * \fn createNode(char* cmd)
- * \brief Cette fonction permet de créer un noeud à partir d'un string correspondant à une commande.
+ * \brief Allow to create a simple node .
  * 
  * \param cmd est un string correspondant à un morceau de la commande lancé par l'utilisateur qui a été parsée
  * \return node
@@ -14,18 +14,18 @@ node* createNode(char* cmd);
 
 /**
  * \fn createEmptyNode()
- * \brief Cette fonction permet de créer un noeud vide.
+ * \brief Create an empty node.
  * \return node
  */
 node* createEmptyNode();
 
 /**
  * \fn createNodeAndLinkNext(node* root, char* cmd)
- * \brief Cette fonction permet de créer un noeud à partir d'un string correspondant à une commande ainsi que du noeud qui le précède.
- * La Fonction renvoie vers le noeud nouvellement créé.
+ * \brief Create a node and place it next to the root node.
+ * The function return the created node.
  * 
- * \param root est le noeud dans lequel on souhaite enregistré le prochain noeud
- * \param cmd est un string correspondant à un morceau de la commande lancé par l'utilisateur qui a été parsée
+ * \param root The root node
+ * \param cmd The new node will be created with this command as node->command
  * \return node
  */
 node* createNodeAndLinkNext(node* root, char* cmd);

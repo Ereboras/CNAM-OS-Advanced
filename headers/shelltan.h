@@ -2,8 +2,10 @@
 #define FILE_MAIN_HEADER
 
 #include "../headers/typedef.h"
+#include "../headers/linked_list.h"
 #include "../headers/utils.h"
 #include "../headers/commands.h"
+#include "../headers/operators.h"
 
 /**
  * \fn logAction(char* command)
@@ -13,40 +15,6 @@
  * \return void
  */
 void logAction(char* command);
-
-/**
- * \fn resultInFile(node *element, bool lastCommand, char readbuffer[32000])
- * \brief Register commands response in a file or display it
- * 
- * \param element Command
- * \param lastCommand Is this the last command or not
- * \param readbuffer Buffer of response
- * \return void
- */
-void resultInFile(node* element, bool lastCommand, char readbuffer[32000]);
-
-/**
- * \fn void forkAndRedirectCmd(node *element, char *args[20], bool lastCommand, int input)
- * \brief Manage child / parent process and input / output
- * 
- * \param element The node of the command
- * \param args Arguments of the command
- * \param lastCommand Is it the last command of the line
- * \param input Input of the command
- * \return void
- */
-void forkAndRedirectCmd(node *element, char *args[20], bool lastCommand, int input);
-
-/**
- * \fn void forkAndRedirectCmd(node *element, char *args[20], bool lastCommand, int input)
- * \brief Check if command is built-in or external command and redirect to correct function
- * 
- * \param element The node of the command
- * \param input Input of the command
- * \param lastCommand Is it the last command of the line
- * \return void
- */
-void createProcessAndExecuteCmd(node* element, int input, bool lastCommand);
 
 /**
  * \fn liberateThem(node* root)

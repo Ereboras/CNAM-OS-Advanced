@@ -63,4 +63,15 @@ int openCommandFile(char *action);
  */
 void printCommandError(char* command, int error);
 
+/**
+ * \fn resultInFile(node *element, bool lastCommand, char readbuffer[32000])
+ * \brief Register commands response in a file or display it
+ * 
+ * \param element Command
+ * \param lastCommand Is this the last command or not
+ * \param readbuffer Buffer of response
+ * \return void
+ */
+void resultInFile(node* element, bool lastCommand, char readbuffer[32000]);
+
 #endif

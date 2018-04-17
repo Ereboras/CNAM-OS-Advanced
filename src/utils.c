@@ -77,3 +77,14 @@ int openCommandFile(char *action) {
 void printCommandError(char* command, int error) {
     printf("Error while executing [%s] : code[%d] => %s\n", command, error, strerror(error));
 }
+
+// Put response of command in a file for the next command or display it if this is the last command
+void resultInFile(node *element, bool lastCommand, char readbuffer[32000]) {
+    if(!lastCommand) {
+        element->response = fopen("tmp_command", "w+");
+        fprintf(element->response, readbuffer);
+        fclose(element->response);
+    } else {
+        printf("%s\n", readbuffer);
+    }
+}

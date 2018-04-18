@@ -7,7 +7,7 @@ void listOperator(node* currentNode) {
             printCommandError(currentNode->previous->command, currentNode->previous->success);
         }
     }
-    if(currentNode->next->executed == false) {
+    if(currentNode->next->executed == false && currentNode->next != NULL) {
         createProcessAndExecuteCmd(currentNode->next, 0, true);
         if(currentNode->next->success != 0) {
             printCommandError(currentNode->next->command, currentNode->next->success);
@@ -39,7 +39,7 @@ void logicalOperatorAnd(node* currentNode) {
         createProcessAndExecuteCmd(currentNode->previous, 0, true);
     }
     
-    if(currentNode->previous->executed == true && currentNode->previous->success == 0 && currentNode->next->executed == false) {
+    if(currentNode->previous->executed == true && currentNode->previous->success == 0 && currentNode->next != NULL && currentNode->next->executed == false ) {
         createProcessAndExecuteCmd(currentNode->next, 0, true);
     } else if (currentNode->previous->executed == true && currentNode->previous->success  != 0){
         printCommandError(currentNode->previous->command, currentNode->previous->success);
@@ -51,12 +51,16 @@ void logicalOperatorOr(node* currentNode) {
     if(currentNode->previous->executed == false) {
         createProcessAndExecuteCmd(currentNode->previous, 0, true);
     }
-    if(currentNode->previous->executed == true && currentNode->previous->success != 0 && currentNode->next->executed == false) {
+    if(currentNode->previous->executed == true && currentNode->previous->success != 0 && currentNode->next != NULL && currentNode->next->executed == false) {
         createProcessAndExecuteCmd(currentNode->next, 0, true);
     }
 }
 
 void redirectOperatorSimpleLeft(node* currentNode) {
+    if(currentNode->next == NULL) {
+        printCommandError(currentNode->previous->command, 2);
+        return;
+    }
     FILE *file = fopen(currentNode->next->command, "r");
     if(file == NULL) {
         printCommandError(currentNode->next->command, errno);
@@ -88,6 +92,10 @@ void redirectOperatorSimpleRight(node* currentNode) {
 }
 
 void redirectOperatorDoubleLeft(node* currentNode) {
+    if(currentNode->next == NULL) {
+        printCommandError(currentNode->previous->command, 2);
+        return;
+    }
     FILE *file = fopen("tmp_command", "w+");
     if(file == NULL) {
         printCommandError(currentNode->next->command, errno);

@@ -12,6 +12,8 @@ node* createNode(char* cmd) {
     node *root = malloc(sizeof(node));
     root->command = cmd;
     root->executed = false;
+    root->next = 0;
+    root->previous = 0;
     return root;
 }
 
@@ -20,6 +22,8 @@ node* createEmptyNode() {
     node *root = malloc(sizeof(node));
     root->command = "";
     root->executed = false;
+    root->next = 0;
+    root->previous = 0;
     return root;
 }
 
@@ -28,5 +32,7 @@ node* createNodeAndLinkNext(node* root, char* cmd) {
     node *temp = createNode(cmd);
     root->next = temp;
     temp->previous = root;
+    temp->next = 0;
+    temp->executed = false;
     return temp;
 }

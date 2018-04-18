@@ -40,19 +40,20 @@ void liberateThem(node* root) {
 bool launchInOrder(node* root) {
     node* currentNode = root;
 
-    // The last command to execute
+    // If this is the only command
     if(currentNode->next == NULL && currentNode->executed == false) {
         createProcessAndExecuteCmd(currentNode, 0, true);
         if(currentNode->executed == true && currentNode->success != 0) {
             printCommandError(currentNode->command, currentNode->success);
-            exit(currentNode->success);
+            //exit(currentNode->success);
         }
     }
 
     // Loop through the double linked list
-    while(currentNode->next != 0) {
-        
+    while(currentNode != 0) {
+        printf(currentNode->command);
         // For && operator
+        
         if(strcmp(currentNode->command, "&&") == 0) {
             logicalOperatorAnd(currentNode);
         } 
@@ -93,7 +94,7 @@ bool launchInOrder(node* root) {
 
 // Display the linked list (only for debug)
 void displayChain(node* root) {
-    printf("%s", root->command);
+    printf("%s\n", root->command);
     if(root->next != 0) {
         displayChain(root->next);
     }
@@ -130,7 +131,7 @@ int buildChain(char *command) {
         
         token = strtok(NULL, " ");
     }
-
+    //displayChain(root);
     launchInOrder(root);
     liberateThem(root);
     return 0;

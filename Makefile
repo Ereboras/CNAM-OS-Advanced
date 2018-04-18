@@ -33,10 +33,11 @@ doc:
 gcov: $(GEXEC)
 	# generate some data for gcov by calling the generated binary with various options
 	$(GCOV_DIR)/$(GEXEC) -h
-	$(GCOV_DIR)/$(GEXEC) -i input -o output -v
+	$(GCOV_DIR)/$(GEXEC) -c "ls -al"
+	$(GCOV_DIR)/$(GEXEC) 
 
-	find ./ -maxdepth 1 -name *.gcno -exec mv {} $(GCOV_DIR) \;
-	find ./ -maxdepth 1 -name *.gcda -exec mv {} $(GCOV_DIR) \;
+	find ./ -maxdepth 1 -name '*.gcno' -exec mv {} $(GCOV_DIR) \;
+	find ./ -maxdepth 1 -name '*.gcda' -exec mv {} $(GCOV_DIR) \;
 
 	gcov -o $(GCOV_DIR) $(GEXEC)
 	lcov -o $(GCOV_DIR)/$(LCOV_REPORT) -c -f -d $(GCOV_DIR)
@@ -53,5 +54,6 @@ clean:
 mrproper: clean
 	rm -rf $(BIN_DIR)/* $(DOC_DIR)/html $(DOC_DIR)/latex
 	rm tmp_command
+	rm -rf gcov/*
 
 .PHONY: clean doc

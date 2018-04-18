@@ -55,5 +55,5 @@ However, the correct result is present in the tmp_command file.
 
 ## Authors
 
-Emilie Abdoul Malik
+Emilie Abdoul Malik  
 Mohamed Azzouz

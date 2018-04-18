@@ -6,7 +6,7 @@ To compile, you just need to use **make** at the root of the project. Then
 For doc generation, use **make doc**.
 For gcov, use **make gcov** after installing lcov.  
 
-## Executing
+## Execution
 
 Since we did the batch & interactive mode, you can execute commands by 2 ways :
 

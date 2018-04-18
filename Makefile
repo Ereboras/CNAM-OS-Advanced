@@ -53,7 +53,7 @@ clean:
 
 mrproper: clean
 	rm -rf $(BIN_DIR)/* $(DOC_DIR)/html $(DOC_DIR)/latex
-	rm tmp_command
+	rm tmp_command *.gcno *.gcda
 	rm -rf gcov/*
 
 .PHONY: clean doc

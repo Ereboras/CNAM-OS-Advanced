@@ -30,7 +30,7 @@ void pipeOperator(node* currentNode) {
         }
     } else if(currentNode->previous->success != 0) {
         printCommandError(currentNode->previous->command, currentNode->previous->success);
-        exit(currentNode->previous->success);
+        //exit(currentNode->previous->success);
     }
 }
 
@@ -43,7 +43,7 @@ void logicalOperatorAnd(node* currentNode) {
         createProcessAndExecuteCmd(currentNode->next, 0, true);
     } else if (currentNode->previous->executed == true && currentNode->previous->success  != 0){
         printCommandError(currentNode->previous->command, currentNode->previous->success);
-        exit(currentNode->previous->success);
+        //exit(currentNode->previous->success);
     }
 }
 
@@ -60,12 +60,12 @@ void redirectOperatorSimpleLeft(node* currentNode) {
     FILE *file = fopen(currentNode->next->command, "r");
     if(file == NULL) {
         printCommandError(currentNode->next->command, errno);
-        exit(errno);
+        //exit(errno);
     }
     int tmpfileint = fileno(file);
     if(tmpfileint == -1) {
         printCommandError(currentNode->next->command, errno);
-        exit(errno);
+        //exit(errno);
     }
     createProcessAndExecuteCmd(currentNode->previous, tmpfileint, true);
     close(tmpfileint);
@@ -75,7 +75,7 @@ void redirectOperatorSimpleRight(node* currentNode) {
     createProcessAndExecuteCmd(currentNode->previous, 0, false);
     if(currentNode->previous->success != 0) {
         printCommandError(currentNode->previous->command, currentNode->previous->success);
-        exit(currentNode->previous->success);
+        //exit(currentNode->previous->success);
     }
     FILE *filedest = fopen(currentNode->next->command, "w");
     FILE *filesrc = fopen("tmp_command", "r");
@@ -91,12 +91,12 @@ void redirectOperatorDoubleLeft(node* currentNode) {
     FILE *file = fopen("tmp_command", "w+");
     if(file == NULL) {
         printCommandError(currentNode->next->command, errno);
-        exit(errno);
+        //exit(errno);
     }
     int tmpfileint = fileno(file);
     if(tmpfileint == -1) {
         printCommandError(currentNode->next->command, errno);
-        exit(errno);
+        //exit(errno);
     }
     // Check if the user end the input with the corresponding string
     char *text;
@@ -124,7 +124,7 @@ void redirectOperatorDoubleRight(node* currentNode) {
     createProcessAndExecuteCmd(currentNode->previous, 0, false);
     if(currentNode->previous->success != 0) {
         printCommandError(currentNode->previous->command, currentNode->previous->success);
-        exit(currentNode->previous->success);
+        //exit(currentNode->previous->success);
     }
     FILE *filedest = fopen(currentNode->next->command, "a");
     FILE *filesrc = fopen("tmp_command", "r");
@@ -132,6 +132,6 @@ void redirectOperatorDoubleRight(node* currentNode) {
         copyFile(filesrc, filedest);
     } else {
         printCommandError(currentNode->next->command, errno);
-        exit(errno);
+        //exit(errno);
     }
 }
